@@ -555,8 +555,10 @@ import { useState, useEffect, useRef } from 'react';
 import { PopupButton } from '@typeform/embed-react';
 
 export default function App() {
-  const BACKEND_URL = 'http://localhost:5000';
-  
+  // const BACKEND_URL = 'http://localhost:5000';
+    const BACKEND_URL = 'https://blissful-optimism-production.up.railway.app';
+
+
   const typeformIds = {
     emailForm: 'bzPeiecs',
     detailsForm: 'IofFwTMn'
