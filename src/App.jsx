@@ -784,7 +784,7 @@ export default function App() {
         
         {/* LEFT CONTENT */}
         <div>
-          <div className="flex items-center gap-3 mb-6">
+          {/* <div className="flex items-center gap-3 mb-6">
             <div className="w-10 h-10 bg-gradient-to-r from-pink-500 to-red-500 rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-lg">SK</span>
             </div>
@@ -792,7 +792,7 @@ export default function App() {
               <h2 className="font-semibold text-gray-300">SK Company</h2>
               <p className="text-sm text-gray-500">Career Application Portal</p>
             </div>
-          </div>
+          </div> */}
 
           <p className="font-normal text-[40px] md:text-[50px] lg:text-[60px] leading-[100%] tracking-[0%] text-white mb-4 lg:mb-6">
             We're hiring.
