@@ -3,7 +3,7 @@ import { Widget } from '@typeform/embed-react';
 
 export default function Apply() {
 //   const BACKEND_URL = 'https://blissful-optimism-production.up.railway.app';
-const BACKEND_URL = 'http://localhost:5000';
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
   
   const typeformIds = {
     emailForm: 'bzPeiecs',
