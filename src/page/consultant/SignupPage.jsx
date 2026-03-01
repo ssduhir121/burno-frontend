@@ -551,7 +551,7 @@ const ConsultantSignupPage = () => {
       if (result.success) {
         setMagicLinkSent(true);
       } else {
-        setError(result.message || 'Failed to send magic link');
+        setErrors(result.message || 'Failed to send magic link');
       }
     } catch (error) {
       console.error('Error during signup:', error);
