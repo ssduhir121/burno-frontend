@@ -506,11 +506,15 @@ const AdminLogin = () => {
 
     try {
       // Check if this is an admin email
-      if (!email.endsWith('@gmail.com') && email !== 'admin@webconsultanthub.com') {
-        setError('Invalid admin email. Please use your admin email address.');
-        setIsLoading(false);
-        return;
-      }
+     if (
+  !email.endsWith('@gmail.com') &&
+  email !== 'admin@webconsultanthub.com' &&
+  !email.endsWith('@asherig.com')
+) {
+  setError('Invalid admin email. Please use your admin email address.');
+  setIsLoading(false);
+  return;
+}
 
       // Use the login function from context
       const result = await login(email, 'admin');
