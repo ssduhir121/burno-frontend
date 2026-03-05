@@ -499,40 +499,65 @@ const AdminLogin = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [magicLinkSent, setMagicLinkSent] = useState(false);
 
-  const handleMagicLinkSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-    setIsLoading(true);
+const handleMagicLinkSubmit = async (e) => {
+  e.preventDefault();
+  setError('');
+  setIsLoading(true);
 
-    try {
-      // Check if this is an admin email
-     if (
-  !email.endsWith('@gmail.com') &&
-  email !== 'admin@webconsultanthub.com' &&
-  !email.endsWith('@asherig.com')
-) {
-  setError('Invalid admin email. Please use your admin email address.');
-  setIsLoading(false);
-  return;
-}
-
-      // Use the login function from context
-      const result = await login(email, 'admin');
-      
-      if (result.success) {
-        setMagicLinkSent(true);
-        // Store email for resend functionality
-        localStorage.setItem('admin_email', email);
-      } else {
-        setError(result.message || 'Failed to send magic link');
-      }
-    } catch (err) {
-      console.error('Login error:', err);
-      setError('Network error. Please try again.');
-    } finally {
-      setIsLoading(false);
+  try {
+    // Directly call login without email restriction
+    const result = await login(email, 'admin');
+    
+    if (result.success) {
+      setMagicLinkSent(true);
+      // Store email for resend functionality
+      localStorage.setItem('admin_email', email);
+    } else {
+      setError(result.message || 'Failed to send magic link');
     }
-  };
+  } catch (err) {
+    console.error('Login error:', err);
+    setError('Network error. Please try again.');
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+
+//   const handleMagicLinkSubmit = async (e) => {
+//     e.preventDefault();
+//     setError('');
+//     setIsLoading(true);
+
+//     try {
+//       // Check if this is an admin email
+//      if (
+//   !email.endsWith('@gmail.com') &&
+//   email !== 'admin@webconsultanthub.com' &&
+//   !email.endsWith('@asherig.com')
+// ) {
+//   setError('Invalid admin email. Please use your admin email address.');
+//   setIsLoading(false);
+//   return;
+// }
+
+//       // Use the login function from context
+//       const result = await login(email, 'admin');
+      
+//       if (result.success) {
+//         setMagicLinkSent(true);
+//         // Store email for resend functionality
+//         localStorage.setItem('admin_email', email);
+//       } else {
+//         setError(result.message || 'Failed to send magic link');
+//       }
+//     } catch (err) {
+//       console.error('Login error:', err);
+//       setError('Network error. Please try again.');
+//     } finally {
+//       setIsLoading(false);
+//     }
+//   };
 
   const handleResendMagicLink = async () => {
     setIsLoading(true);
