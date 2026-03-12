@@ -1092,11 +1092,14 @@ const ConsultantProfileSetup = () => {
     }
   };
 
- const handleSubmitStep2 = async () => {
+// In ConsultantProfileSetup.jsx - Update handleSubmitStep2
+const handleSubmitStep2 = async () => {
   setLoading(true);
   setError('');
 
   try {
+    console.log('📤 Saving availability data:', formData.availability_blocks);
+    
     const response = await fetch(`${BACKEND_URL}/api/save-consultant-profile`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -1110,6 +1113,7 @@ const ConsultantProfileSetup = () => {
     });
 
     const data = await response.json();
+    console.log('📥 Availability save response:', data);
 
     if (data.success) {
       // Save availability to localStorage
@@ -1120,13 +1124,10 @@ const ConsultantProfileSetup = () => {
       updateProfileCompletion('availability', true);
       
       console.log('✅ Availability saved, updating profile completion');
-      console.log('Current profile completion after update:', profileCompletion);
       
       setSuccess(true);
-      // Clear stored signup data
-      localStorage.removeItem('consultant_signup_data');
       
-      // Navigate to subscription page - THIS SHOULD HAPPEN
+      // Navigate to subscription page
       setTimeout(() => {
         console.log('⏰ Navigating to subscription page...');
         navigate('/consultant/subscription');
@@ -1135,6 +1136,7 @@ const ConsultantProfileSetup = () => {
       setError(data.error || 'Failed to save availability');
     }
   } catch (err) {
+    console.error('❌ Error saving availability:', err);
     setError('Network error. Please try again.');
   } finally {
     setLoading(false);

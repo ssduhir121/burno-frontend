@@ -1,3 +1,4 @@
+
 // // src/page/consultant/Dashboard.jsx
 // import React, { useState, useEffect } from 'react';
 // import { 
@@ -65,7 +66,7 @@
 // }
 
 // const ConsultantDashboard = () => {
-//   const { user, logout, BACKEND_URL } = useAuth();
+//   const { user, logout, profileCompletion, BACKEND_URL } = useAuth();
 //   const navigate = useNavigate();
 //   const [sidebarOpen, setSidebarOpen] = useState(false);
 //   const [activeTab, setActiveTab] = useState('overview');
@@ -82,6 +83,38 @@
 //     }
 //   });
 
+//   // Debug: Log profile completion on mount
+//   useEffect(() => {
+//     console.log('🔍 Dashboard mounted');
+//     console.log('User:', user);
+//     console.log('Profile Completion from context:', profileCompletion);
+//     console.log('localStorage:', {
+//       profile_setup_complete: localStorage.getItem('profile_setup_complete'),
+//       subscription_complete: localStorage.getItem('subscription_complete'),
+//       profile_completion: localStorage.getItem('profile_completion')
+//     });
+
+//     // Check if we should be here based on profile completion
+//     const basicComplete = profileCompletion.basicInfo || localStorage.getItem('profile_setup_complete') === 'basic' || localStorage.getItem('profile_setup_complete') === 'availability';
+//     const availabilityComplete = profileCompletion.availability || localStorage.getItem('profile_setup_complete') === 'availability';
+//     const paymentComplete = profileCompletion.payment || localStorage.getItem('subscription_complete') === 'true';
+
+//     console.log('Completion check:', { basicComplete, availabilityComplete, paymentComplete });
+
+//     if (!basicComplete) {
+//       console.log('⚠️ Basic info not complete, redirecting to profile setup');
+//       navigate('/consultant/profile-setup?step=basic');
+//     } else if (!availabilityComplete) {
+//       console.log('⚠️ Availability not complete, redirecting to availability setup');
+//       navigate('/consultant/profile-setup?step=availability');
+//     } else if (!paymentComplete) {
+//       console.log('⚠️ Payment not complete, redirecting to subscription');
+//       navigate('/consultant/subscription');
+//     } else {
+//       console.log('✅ All checks passed, loading dashboard');
+//     }
+//   }, [user, profileCompletion, navigate]);
+
 //   // Fetch real dashboard data from backend
 //   useEffect(() => {
 //     const fetchDashboardData = async () => {
@@ -95,6 +128,8 @@
 //         setError('');
         
 //         const token = localStorage.getItem('auth_token');
+//         console.log('Fetching dashboard data for:', user.email);
+        
 //         const response = await fetch(`${BACKEND_URL}/api/user/dashboard/${encodeURIComponent(user.email)}`, {
 //           headers: {
 //             'Authorization': token ? `Bearer ${token}` : '',
@@ -107,6 +142,7 @@
 //         }
 
 //         const result = await response.json();
+//         console.log('Dashboard data received:', result);
 
 //         if (result.success && result.data) {
 //           // Safely extract data with fallbacks
@@ -134,7 +170,10 @@
 //       }
 //     };
 
-//     fetchDashboardData();
+//     // Only fetch if user exists and completion checks pass
+//     if (user?.email) {
+//       fetchDashboardData();
+//     }
 //   }, [user, BACKEND_URL]);
 
 //   // Safe data access with fallbacks
@@ -644,6 +683,8 @@
 
 
 
+
+
 // src/page/consultant/Dashboard.jsx
 import React, { useState, useEffect } from 'react';
 import { 
@@ -665,10 +706,20 @@ import {
   Users,
   DollarSign,
   AlertCircle,
-  Loader
+  Loader,
+  HelpCircle,
+  Send,
+  Paperclip,
+  X,
+  ChevronRight,
+  Mail,
+  Phone,
+  LifeBuoy,
+  Ticket
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import ContactSupportModal from '../../components/modals/ContactSupportModal';
 
 // Error Boundary Component
 class ErrorBoundary extends React.Component {
@@ -710,6 +761,206 @@ class ErrorBoundary extends React.Component {
   }
 }
 
+// Support Ticket Component
+const SupportTicket = ({ ticket, onViewDetails }) => {
+  const getStatusColor = (status) => {
+    switch(status) {
+      case 'new': return 'bg-yellow-100 text-yellow-800';
+      case 'in_progress': return 'bg-blue-100 text-blue-800';
+      case 'resolved': return 'bg-green-100 text-green-800';
+      case 'closed': return 'bg-gray-100 text-gray-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getPriorityColor = (priority) => {
+    switch(priority) {
+      case 'critical': return 'bg-red-100 text-red-800';
+      case 'high': return 'bg-orange-100 text-orange-800';
+      case 'normal': return 'bg-blue-100 text-blue-800';
+      case 'low': return 'bg-green-100 text-green-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins} minutes ago`;
+    if (diffHours < 24) return `${diffHours} hours ago`;
+    if (diffDays < 7) return `${diffDays} days ago`;
+    return date.toLocaleDateString();
+  };
+
+  return (
+    <div 
+      className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition cursor-pointer"
+      onClick={() => onViewDetails(ticket)}
+    >
+      <div className="flex justify-between items-start mb-3">
+        <div>
+          <div className="flex items-center space-x-2 mb-1">
+            <span className="text-sm font-mono text-blue-600">{ticket.ticketId}</span>
+            <span className={`px-2 py-0.5 text-xs rounded-full ${getPriorityColor(ticket.priority)}`}>
+              {ticket.priority}
+            </span>
+          </div>
+          <h3 className="font-semibold text-gray-900">{ticket.subject}</h3>
+        </div>
+        <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(ticket.status)}`}>
+          {ticket.status.replace('_', ' ')}
+        </span>
+      </div>
+      <p className="text-sm text-gray-600 mb-3 line-clamp-2">{ticket.message}</p>
+      <div className="flex items-center justify-between text-xs text-gray-500">
+        <span>{formatDate(ticket.createdAt)}</span>
+        <span className="flex items-center text-blue-600">
+          View Details <ChevronRight className="w-4 h-4 ml-1" />
+        </span>
+      </div>
+    </div>
+  );
+};
+
+// Ticket Details Modal
+const TicketDetailsModal = ({ ticket, onClose, onReply, BACKEND_URL }) => {
+  const [replyMessage, setReplyMessage] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmitReply = async () => {
+    if (!replyMessage.trim()) return;
+    
+    setSubmitting(true);
+    await onReply(ticket._id, replyMessage);
+    setReplyMessage('');
+    setSubmitting(false);
+  };
+
+  const getStatusColor = (status) => {
+    switch(status) {
+      case 'new': return 'bg-yellow-100 text-yellow-800';
+      case 'in_progress': return 'bg-blue-100 text-blue-800';
+      case 'resolved': return 'bg-green-100 text-green-800';
+      case 'closed': return 'bg-gray-100 text-gray-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getPriorityColor = (priority) => {
+    switch(priority) {
+      case 'critical': return 'bg-red-100 text-red-800';
+      case 'high': return 'bg-orange-100 text-orange-800';
+      case 'normal': return 'bg-blue-100 text-blue-800';
+      case 'low': return 'bg-green-100 text-green-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 overflow-y-auto">
+      <div className="fixed inset-0 bg-black bg-opacity-50" onClick={onClose} />
+      <div className="relative min-h-screen flex items-center justify-center p-4">
+        <div className="relative bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
+            <h2 className="text-xl font-bold text-gray-900">Ticket #{ticket.ticketId}</h2>
+            <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+              <X className="w-6 h-6" />
+            </button>
+          </div>
+          
+          <div className="p-6">
+            {/* Ticket Header */}
+            <div className="mb-6">
+              <div className="flex items-center space-x-2 mb-3">
+                <span className={`px-3 py-1 text-sm rounded-full ${getPriorityColor(ticket.priority)}`}>
+                  {ticket.priority} priority
+                </span>
+                <span className={`px-3 py-1 text-sm rounded-full ${getStatusColor(ticket.status)}`}>
+                  {ticket.status.replace('_', ' ')}
+                </span>
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">{ticket.subject}</h3>
+              <p className="text-sm text-gray-600">Created on {new Date(ticket.createdAt).toLocaleString()}</p>
+            </div>
+
+            {/* Original Message */}
+            <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+              <div className="flex items-center justify-between mb-2">
+                <span className="font-medium text-gray-900">Your Message</span>
+                <span className="text-xs text-gray-500">{new Date(ticket.createdAt).toLocaleString()}</span>
+              </div>
+              <p className="text-gray-700 whitespace-pre-wrap">{ticket.message}</p>
+            </div>
+
+            {/* Replies */}
+            {ticket.replies && ticket.replies.length > 0 && (
+              <div className="mb-6">
+                <h4 className="font-medium text-gray-900 mb-4">Conversation</h4>
+                <div className="space-y-4">
+                  {ticket.replies.map((reply, index) => (
+                    <div key={index} className={`p-4 rounded-lg ${
+                      reply.userRole === 'admin' ? 'bg-blue-50 ml-4' : 'bg-gray-50'
+                    }`}>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-medium text-gray-900">
+                          {reply.userRole === 'admin' ? 'Support Team' : 'You'}
+                        </span>
+                        <span className="text-xs text-gray-500">
+                          {new Date(reply.createdAt).toLocaleString()}
+                        </span>
+                      </div>
+                      <p className="text-gray-700 whitespace-pre-wrap">{reply.message}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Reply Form */}
+            {ticket.status !== 'closed' && ticket.status !== 'resolved' && (
+              <div className="border-t border-gray-200 pt-6">
+                <h4 className="font-medium text-gray-900 mb-3">Add Reply</h4>
+                <textarea
+                  value={replyMessage}
+                  onChange={(e) => setReplyMessage(e.target.value)}
+                  placeholder="Type your reply here..."
+                  rows="4"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                />
+                <div className="flex justify-end mt-3">
+                  <button
+                    onClick={handleSubmitReply}
+                    disabled={!replyMessage.trim() || submitting}
+                    className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                  >
+                    {submitting ? (
+                      <>
+                        <Loader className="w-4 h-4 animate-spin mr-2" />
+                        Sending...
+                      </>
+                    ) : (
+                      <>
+                        <Send className="w-4 h-4 mr-2" />
+                        Send Reply
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const ConsultantDashboard = () => {
   const { user, logout, profileCompletion, BACKEND_URL } = useAuth();
   const navigate = useNavigate();
@@ -717,6 +968,11 @@ const ConsultantDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
+  const [selectedTicket, setSelectedTicket] = useState(null);
+  const [supportTickets, setSupportTickets] = useState([]);
+  const [supportLoading, setSupportLoading] = useState(false);
+  
   const [dashboardData, setDashboardData] = useState({
     profile: null,
     matches: [],
@@ -759,6 +1015,87 @@ const ConsultantDashboard = () => {
       console.log('✅ All checks passed, loading dashboard');
     }
   }, [user, profileCompletion, navigate]);
+
+  // Fetch support tickets
+  const fetchSupportTickets = async () => {
+    if (!user?.email) return;
+    
+    try {
+      setSupportLoading(true);
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch(`${BACKEND_URL}/api/user/support-requests/${encodeURIComponent(user.email)}`, {
+        headers: {
+          'Authorization': token ? `Bearer ${token}` : '',
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      const data = await response.json();
+      if (data.success) {
+        setSupportTickets(data.requests || []);
+      }
+    } catch (err) {
+      console.error('Error fetching support tickets:', err);
+    } finally {
+      setSupportLoading(false);
+    }
+  };
+
+  // Fetch ticket details
+  const fetchTicketDetails = async (ticket) => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch(
+        `${BACKEND_URL}/api/user/support-requests/${encodeURIComponent(user.email)}/${ticket.ticketId}`,
+        {
+          headers: {
+            'Authorization': token ? `Bearer ${token}` : '',
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      
+      const data = await response.json();
+      if (data.success) {
+        setSelectedTicket({
+          ...data.request,
+          replies: data.replies || []
+        });
+      }
+    } catch (err) {
+      console.error('Error fetching ticket details:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Submit reply to ticket
+  const handleSubmitReply = async (ticketId, message) => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch(`${BACKEND_URL}/api/admin/support-requests/${ticketId}/reply`, {
+        method: 'POST',
+        headers: {
+          'Authorization': token ? `Bearer ${token}` : '',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ message, isInternal: false })
+      });
+      
+      const data = await response.json();
+      if (data.success) {
+        // Refresh ticket details
+        if (selectedTicket) {
+          await fetchTicketDetails(selectedTicket);
+        }
+        // Refresh tickets list
+        await fetchSupportTickets();
+      }
+    } catch (err) {
+      console.error('Error submitting reply:', err);
+    }
+  };
 
   // Fetch real dashboard data from backend
   useEffect(() => {
@@ -804,6 +1141,9 @@ const ConsultantDashboard = () => {
               earnings: profile.earnings_ytd || 0
             }
           });
+
+          // Fetch support tickets after dashboard data
+          await fetchSupportTickets();
         } else {
           setError(result.error || 'Failed to load dashboard data');
         }
@@ -957,10 +1297,26 @@ const ConsultantDashboard = () => {
   return (
     <ErrorBoundary>
       <div className="min-h-screen bg-gray-50">
+        {/* Contact Support Modal */}
+        <ContactSupportModal 
+          isOpen={isSupportModalOpen}
+          onClose={() => setIsSupportModalOpen(false)}
+        />
+
+        {/* Ticket Details Modal */}
+        {selectedTicket && (
+          <TicketDetailsModal
+            ticket={selectedTicket}
+            onClose={() => setSelectedTicket(null)}
+            onReply={handleSubmitReply}
+            BACKEND_URL={BACKEND_URL}
+          />
+        )}
+
         {/* Mobile Sidebar Overlay */}
         {sidebarOpen && (
           <div 
-            className="fixed inset-0 bg-gray-600 bg-opacity-50 z-20 lg:hidden"
+            className="fixed inset-0 bg-gray-600 bg-opacity-10 z-20 lg:hidden"
             onClick={() => setSidebarOpen(false)}
           />
         )}
@@ -971,8 +1327,8 @@ const ConsultantDashboard = () => {
             {/* Sidebar Header */}
             <div className="px-4 py-6 border-b border-blue-700">
               <div className="flex items-center space-x-3">
-                <div className="bg-white/20 p-2 rounded-lg">
-                  <Briefcase className="w-6 h-6" />
+                <div className="rounded-lg">
+              <img src="/logo.png" alt="Logo" className="h-20 object-contain" />
                 </div>
                 <div>
                   <h2 className="font-bold text-lg">Consultant Panel</h2>
@@ -1014,6 +1370,7 @@ const ConsultantDashboard = () => {
                 { id: 'messages', label: 'Messages', icon: <MessageSquare className="w-5 h-5" /> },
                 { id: 'profile', label: 'Profile', icon: <User className="w-5 h-5" /> },
                 { id: 'documents', label: 'Documents', icon: <FileText className="w-5 h-5" /> },
+                { id: 'support', label: 'Support', icon: <LifeBuoy className="w-5 h-5" /> },
                 { id: 'settings', label: 'Settings', icon: <Settings className="w-5 h-5" /> }
               ].map((item) => (
                 <button
@@ -1059,6 +1416,13 @@ const ConsultantDashboard = () => {
                   <button className="relative p-2 text-gray-400 hover:text-gray-600">
                     <Bell className="w-6 h-6" />
                     <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                  </button>
+                  <button
+                    onClick={() => setIsSupportModalOpen(true)}
+                    className="p-2 text-gray-400 hover:text-gray-600 relative group"
+                    title="Contact Support"
+                  >
+                    <HelpCircle className="w-6 h-6" />
                   </button>
                   <div className="flex items-center space-x-3">
                     <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
@@ -1161,24 +1525,61 @@ const ConsultantDashboard = () => {
                     </div>
                   </div>
 
-                  {/* Recent Messages - Using mock data for now */}
+                  {/* Support Tickets Preview */}
                   <div className="bg-white rounded-xl shadow-sm border border-gray-200">
                     <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-                      <h2 className="text-lg font-semibold text-gray-900">Recent Messages</h2>
+                      <h2 className="text-lg font-semibold text-gray-900">Support Tickets</h2>
                       <button 
-                        onClick={() => setActiveTab('messages')}
+                        onClick={() => setActiveTab('support')}
                         className="text-sm text-blue-600 hover:text-blue-700"
                       >
                         View All
                       </button>
                     </div>
                     <div className="p-6">
-                      <div className="text-center py-8">
-                        <div className="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                          <MessageSquare className="w-8 h-8 text-gray-400" />
+                      {supportLoading ? (
+                        <div className="flex justify-center py-8">
+                          <Loader className="w-6 h-6 animate-spin text-blue-600" />
                         </div>
-                        <p className="text-gray-500">No messages yet</p>
-                      </div>
+                      ) : supportTickets.length > 0 ? (
+                        <div className="space-y-3">
+                          {supportTickets.slice(0, 2).map((ticket) => (
+                            <div
+                              key={ticket._id}
+                              onClick={() => fetchTicketDetails(ticket)}
+                              className="p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer transition"
+                            >
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="text-xs font-mono text-blue-600">{ticket.ticketId}</span>
+                                <span className={`px-2 py-0.5 text-xs rounded-full ${
+                                  ticket.status === 'new' ? 'bg-yellow-100 text-yellow-800' :
+                                  ticket.status === 'in_progress' ? 'bg-blue-100 text-blue-800' :
+                                  'bg-green-100 text-green-800'
+                                }`}>
+                                  {ticket.status}
+                                </span>
+                              </div>
+                              <p className="text-sm font-medium text-gray-900 truncate">{ticket.subject}</p>
+                              <p className="text-xs text-gray-500 mt-1">
+                                {new Date(ticket.createdAt).toLocaleDateString()}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-center py-6">
+                          <div className="bg-gray-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <Ticket className="w-6 h-6 text-gray-400" />
+                          </div>
+                          <p className="text-gray-500 text-sm mb-2">No support tickets</p>
+                          <button
+                            onClick={() => setIsSupportModalOpen(true)}
+                            className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                          >
+                            Contact Support →
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -1315,6 +1716,93 @@ const ConsultantDashboard = () => {
                     <p className="text-gray-500">Complete your profile to get matched with relevant projects</p>
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* Support Tab */}
+            {activeTab === 'support' && (
+              <div className="space-y-6">
+                {/* Support Header */}
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h2 className="text-2xl font-bold text-gray-900">Support Center</h2>
+                      <p className="text-gray-600 mt-1">Get help with your account, projects, or technical issues</p>
+                    </div>
+                    <button
+                      onClick={() => setIsSupportModalOpen(true)}
+                      className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition font-medium flex items-center"
+                    >
+                      <HelpCircle className="w-5 h-5 mr-2" />
+                      Contact Support
+                    </button>
+                  </div>
+                </div>
+
+                {/* Quick Support Options */}
+                <div className="grid md:grid-cols-3 gap-4">
+                  <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center hover:shadow-md transition">
+                    <div className="bg-blue-100 w-12 h-12 rounded-lg flex items-center justify-center mx-auto mb-4">
+                      <Mail className="w-6 h-6 text-blue-600" />
+                    </div>
+                    <h3 className="font-semibold text-gray-900 mb-2">Email Support</h3>
+                    <p className="text-sm text-gray-600 mb-3">support@webconsultanthub.com</p>
+                    <p className="text-xs text-gray-500">Reply within 24 hours</p>
+                  </div>
+
+                  <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center hover:shadow-md transition">
+                    <div className="bg-green-100 w-12 h-12 rounded-lg flex items-center justify-center mx-auto mb-4">
+                      <MessageSquare className="w-6 h-6 text-green-600" />
+                    </div>
+                    <h3 className="font-semibold text-gray-900 mb-2">Live Chat</h3>
+                    <p className="text-sm text-gray-600 mb-3">Chat with support team</p>
+                    <p className="text-xs text-gray-500">Available 24/7</p>
+                  </div>
+
+                  <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center hover:shadow-md transition">
+                    <div className="bg-purple-100 w-12 h-12 rounded-lg flex items-center justify-center mx-auto mb-4">
+                      <FileText className="w-6 h-6 text-purple-600" />
+                    </div>
+                    <h3 className="font-semibold text-gray-900 mb-2">Help Center</h3>
+                    <p className="text-sm text-gray-600 mb-3">Browse knowledge base</p>
+                    <p className="text-xs text-gray-500">Self-service resources</p>
+                  </div>
+                </div>
+
+                {/* Support Tickets */}
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Your Support Tickets</h3>
+                  
+                  {supportLoading ? (
+                    <div className="flex justify-center py-8">
+                      <Loader className="w-8 h-8 animate-spin text-blue-600" />
+                    </div>
+                  ) : supportTickets.length > 0 ? (
+                    <div className="space-y-4">
+                      {supportTickets.map((ticket) => (
+                        <SupportTicket
+                          key={ticket._id}
+                          ticket={ticket}
+                          onViewDetails={fetchTicketDetails}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-12">
+                      <div className="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Ticket className="w-8 h-8 text-gray-400" />
+                      </div>
+                      <h3 className="text-lg font-medium text-gray-900 mb-2">No support tickets</h3>
+                      <p className="text-gray-500 mb-4">You haven't created any support tickets yet</p>
+                      <button
+                        onClick={() => setIsSupportModalOpen(true)}
+                        className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition font-medium"
+                      >
+                        Create Support Ticket
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </main>

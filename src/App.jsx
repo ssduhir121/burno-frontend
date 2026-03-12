@@ -134,7 +134,8 @@ import { AuthProvider } from './context/AuthContext';
 // Original pages
 import Apply from './page/Apply.jsx';
 import Home from './page/Home.jsx';
-
+import Terms from './page/Terms';
+import Privacy from './page/Privacy';
 // Admin Pages
 import AdminLogin from './page/admin/AdminLogin.jsx';
 import AdminDashboard from './page/admin/Dashboard.jsx';
@@ -241,6 +242,8 @@ function App() {
               </ProtectedRoute>
             } 
           />
+          <Route path="/terms" element={<Terms />} />
+<Route path="/privacy" element={<Privacy />} />
           
           {/* ========== 404 - CATCH ALL ========== */}
           <Route path="*" element={<Home />} />
