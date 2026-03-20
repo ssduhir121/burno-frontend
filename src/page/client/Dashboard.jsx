@@ -1,3 +1,5 @@
+
+
 // // src/page/client/Dashboard.jsx
 // import React, { useState, useEffect } from 'react';
 // import {
@@ -23,10 +25,24 @@
 //   X,
 //   Loader,
 //   MapPin,
-//   Filter
+//   Filter,
+//   HelpCircle,
+//   LifeBuoy,
+//   Ticket,
+//   Send,
+//   Paperclip,
+//   ChevronRight,
+//   Mail,
+//   Phone,
+//   ExternalLink,
+//   TrendingUp,
+//   Link as LinkIcon
 // } from 'lucide-react';
 // import { useAuth } from '../../context/AuthContext';
 // import { useNavigate } from 'react-router-dom';
+// import ContactSupportModal from '../../components/modals/ContactSupportModal';
+// import AvailabilityCalendar from '../../components/AvailabilityCalendar';
+// import AgendaWidget from '../../components/AgendaWidget';
 
 // // Error Boundary Component
 // class ErrorBoundary extends React.Component {
@@ -68,6 +84,206 @@
 //   }
 // }
 
+// // Support Ticket Component
+// const SupportTicket = ({ ticket, onViewDetails }) => {
+//   const getStatusColor = (status) => {
+//     switch(status) {
+//       case 'new': return 'bg-yellow-100 text-yellow-800';
+//       case 'in_progress': return 'bg-blue-100 text-blue-800';
+//       case 'resolved': return 'bg-green-100 text-green-800';
+//       case 'closed': return 'bg-gray-100 text-gray-800';
+//       default: return 'bg-gray-100 text-gray-800';
+//     }
+//   };
+
+//   const getPriorityColor = (priority) => {
+//     switch(priority) {
+//       case 'critical': return 'bg-red-100 text-red-800';
+//       case 'high': return 'bg-orange-100 text-orange-800';
+//       case 'normal': return 'bg-blue-100 text-blue-800';
+//       case 'low': return 'bg-green-100 text-green-800';
+//       default: return 'bg-gray-100 text-gray-800';
+//     }
+//   };
+
+//   const formatDate = (dateString) => {
+//     const date = new Date(dateString);
+//     const now = new Date();
+//     const diffMs = now - date;
+//     const diffMins = Math.floor(diffMs / 60000);
+//     const diffHours = Math.floor(diffMs / 3600000);
+//     const diffDays = Math.floor(diffMs / 86400000);
+
+//     if (diffMins < 1) return 'Just now';
+//     if (diffMins < 60) return `${diffMins} minutes ago`;
+//     if (diffHours < 24) return `${diffHours} hours ago`;
+//     if (diffDays < 7) return `${diffDays} days ago`;
+//     return date.toLocaleDateString();
+//   };
+
+//   return (
+//     <div 
+//       className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition cursor-pointer"
+//       onClick={() => onViewDetails(ticket)}
+//     >
+//       <div className="flex justify-between items-start mb-3">
+//         <div>
+//           <div className="flex items-center space-x-2 mb-1">
+//             <span className="text-sm font-mono text-blue-600">{ticket.ticketId}</span>
+//             <span className={`px-2 py-0.5 text-xs rounded-full ${getPriorityColor(ticket.priority)}`}>
+//               {ticket.priority}
+//             </span>
+//           </div>
+//           <h3 className="font-semibold text-gray-900">{ticket.subject}</h3>
+//         </div>
+//         <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(ticket.status)}`}>
+//           {ticket.status.replace('_', ' ')}
+//         </span>
+//       </div>
+//       <p className="text-sm text-gray-600 mb-3 line-clamp-2">{ticket.message}</p>
+//       <div className="flex items-center justify-between text-xs text-gray-500">
+//         <span>{formatDate(ticket.createdAt)}</span>
+//         <span className="flex items-center text-blue-600">
+//           View Details <ChevronRight className="w-4 h-4 ml-1" />
+//         </span>
+//       </div>
+//     </div>
+//   );
+// };
+
+// // Ticket Details Modal
+// const TicketDetailsModal = ({ ticket, onClose, onReply, BACKEND_URL }) => {
+//   const [replyMessage, setReplyMessage] = useState('');
+//   const [submitting, setSubmitting] = useState(false);
+
+//   const handleSubmitReply = async () => {
+//     if (!replyMessage.trim()) return;
+    
+//     setSubmitting(true);
+//     await onReply(ticket._id, replyMessage);
+//     setReplyMessage('');
+//     setSubmitting(false);
+//   };
+
+//   const getStatusColor = (status) => {
+//     switch(status) {
+//       case 'new': return 'bg-yellow-100 text-yellow-800';
+//       case 'in_progress': return 'bg-blue-100 text-blue-800';
+//       case 'resolved': return 'bg-green-100 text-green-800';
+//       case 'closed': return 'bg-gray-100 text-gray-800';
+//       default: return 'bg-gray-100 text-gray-800';
+//     }
+//   };
+
+//   const getPriorityColor = (priority) => {
+//     switch(priority) {
+//       case 'critical': return 'bg-red-100 text-red-800';
+//       case 'high': return 'bg-orange-100 text-orange-800';
+//       case 'normal': return 'bg-blue-100 text-blue-800';
+//       case 'low': return 'bg-green-100 text-green-800';
+//       default: return 'bg-gray-100 text-gray-800';
+//     }
+//   };
+
+//   return (
+//     <div className="fixed inset-0 z-50 overflow-y-auto">
+//       <div className="fixed inset-0 bg-black bg-opacity-50" onClick={onClose} />
+//       <div className="relative min-h-screen flex items-center justify-center p-4">
+//         <div className="relative bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+//           <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
+//             <h2 className="text-xl font-bold text-gray-900">Ticket #{ticket.ticketId}</h2>
+//             <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+//               <X className="w-6 h-6" />
+//             </button>
+//           </div>
+          
+//           <div className="p-6">
+//             {/* Ticket Header */}
+//             <div className="mb-6">
+//               <div className="flex items-center space-x-2 mb-3">
+//                 <span className={`px-3 py-1 text-sm rounded-full ${getPriorityColor(ticket.priority)}`}>
+//                   {ticket.priority} priority
+//                 </span>
+//                 <span className={`px-3 py-1 text-sm rounded-full ${getStatusColor(ticket.status)}`}>
+//                   {ticket.status.replace('_', ' ')}
+//                 </span>
+//               </div>
+//               <h3 className="text-lg font-semibold text-gray-900 mb-2">{ticket.subject}</h3>
+//               <p className="text-sm text-gray-600">Created on {new Date(ticket.createdAt).toLocaleString()}</p>
+//             </div>
+
+//             {/* Original Message */}
+//             <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+//               <div className="flex items-center justify-between mb-2">
+//                 <span className="font-medium text-gray-900">Your Message</span>
+//                 <span className="text-xs text-gray-500">{new Date(ticket.createdAt).toLocaleString()}</span>
+//               </div>
+//               <p className="text-gray-700 whitespace-pre-wrap">{ticket.message}</p>
+//             </div>
+
+//             {/* Replies */}
+//             {ticket.replies && ticket.replies.length > 0 && (
+//               <div className="mb-6">
+//                 <h4 className="font-medium text-gray-900 mb-4">Conversation</h4>
+//                 <div className="space-y-4">
+//                   {ticket.replies.map((reply, index) => (
+//                     <div key={index} className={`p-4 rounded-lg ${
+//                       reply.userRole === 'admin' ? 'bg-blue-50 ml-4' : 'bg-gray-50'
+//                     }`}>
+//                       <div className="flex items-center justify-between mb-2">
+//                         <span className="font-medium text-gray-900">
+//                           {reply.userRole === 'admin' ? 'Support Team' : 'You'}
+//                         </span>
+//                         <span className="text-xs text-gray-500">
+//                           {new Date(reply.createdAt).toLocaleString()}
+//                         </span>
+//                       </div>
+//                       <p className="text-gray-700 whitespace-pre-wrap">{reply.message}</p>
+//                     </div>
+//                   ))}
+//                 </div>
+//               </div>
+//             )}
+
+//             {/* Reply Form */}
+//             {ticket.status !== 'closed' && ticket.status !== 'resolved' && (
+//               <div className="border-t border-gray-200 pt-6">
+//                 <h4 className="font-medium text-gray-900 mb-3">Add Reply</h4>
+//                 <textarea
+//                   value={replyMessage}
+//                   onChange={(e) => setReplyMessage(e.target.value)}
+//                   placeholder="Type your reply here..."
+//                   rows="4"
+//                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+//                 />
+//                 <div className="flex justify-end mt-3">
+//                   <button
+//                     onClick={handleSubmitReply}
+//                     disabled={!replyMessage.trim() || submitting}
+//                     className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+//                   >
+//                     {submitting ? (
+//                       <>
+//                         <Loader className="w-4 h-4 animate-spin mr-2" />
+//                         Sending...
+//                       </>
+//                     ) : (
+//                       <>
+//                         <Send className="w-4 h-4 mr-2" />
+//                         Send Reply
+//                       </>
+//                     )}
+//                   </button>
+//                 </div>
+//               </div>
+//             )}
+//           </div>
+//         </div>
+//       </div>
+//     </div>
+//   );
+// };
+
 // const ClientDashboard = () => {
 //   const { user, logout, BACKEND_URL } = useAuth();
 //   const navigate = useNavigate();
@@ -76,7 +292,12 @@
 //   const [loading, setLoading] = useState(true);
 //   const [error, setError] = useState('');
 //   const [showNewRequestModal, setShowNewRequestModal] = useState(false);
+//   const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
+//   const [selectedTicket, setSelectedTicket] = useState(null);
+//   const [supportTickets, setSupportTickets] = useState([]);
+//   const [supportLoading, setSupportLoading] = useState(false);
 //   const [positions, setPositions] = useState([]);
+//   const [availabilityData, setAvailabilityData] = useState({});
 //   const [dashboardData, setDashboardData] = useState({
 //     profile: null,
 //     requests: [],
@@ -97,6 +318,12 @@
 //     work_city: '',
 //     work_mode: 'remote'
 //   });
+
+//   // Handle availability change (for viewing consultant availability)
+//   const handleAvailabilityChange = (date, status, timeRange) => {
+//     console.log('Consultant availability viewed:', { date, status, timeRange });
+//     // This is for viewing purposes only - clients can see consultant availability
+//   };
 
 //   // Fetch dashboard data
 //   useEffect(() => {
@@ -130,6 +357,14 @@
 //             requests: Array.isArray(result.data.requests) ? result.data.requests : [],
 //             matches: Array.isArray(result.data.matches) ? result.data.matches : []
 //           });
+
+//           // Load availability data if exists
+//           if (result.data.profile?.availability) {
+//             setAvailabilityData(result.data.profile.availability);
+//           }
+
+//           // Fetch support tickets after dashboard data
+//           await fetchSupportTickets();
 //         } else {
 //           setError(result.error || 'Failed to load dashboard data');
 //         }
@@ -143,6 +378,87 @@
 
 //     fetchDashboardData();
 //   }, [user, BACKEND_URL]);
+
+//   // Fetch support tickets
+//   const fetchSupportTickets = async () => {
+//     if (!user?.email) return;
+    
+//     try {
+//       setSupportLoading(true);
+//       const token = localStorage.getItem('auth_token');
+//       const response = await fetch(`${BACKEND_URL}/api/user/support-requests/${encodeURIComponent(user.email)}`, {
+//         headers: {
+//           'Authorization': token ? `Bearer ${token}` : '',
+//           'Content-Type': 'application/json'
+//         }
+//       });
+      
+//       const data = await response.json();
+//       if (data.success) {
+//         setSupportTickets(data.requests || []);
+//       }
+//     } catch (err) {
+//       console.error('Error fetching support tickets:', err);
+//     } finally {
+//       setSupportLoading(false);
+//     }
+//   };
+
+//   // Fetch ticket details
+//   const fetchTicketDetails = async (ticket) => {
+//     try {
+//       setLoading(true);
+//       const token = localStorage.getItem('auth_token');
+//       const response = await fetch(
+//         `${BACKEND_URL}/api/user/support-requests/${encodeURIComponent(user.email)}/${ticket.ticketId}`,
+//         {
+//           headers: {
+//             'Authorization': token ? `Bearer ${token}` : '',
+//             'Content-Type': 'application/json'
+//           }
+//         }
+//       );
+      
+//       const data = await response.json();
+//       if (data.success) {
+//         setSelectedTicket({
+//           ...data.request,
+//           replies: data.replies || []
+//         });
+//       }
+//     } catch (err) {
+//       console.error('Error fetching ticket details:', err);
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   // Submit reply to ticket
+//   const handleSubmitReply = async (ticketId, message) => {
+//     try {
+//       const token = localStorage.getItem('auth_token');
+//       const response = await fetch(`${BACKEND_URL}/api/admin/support-requests/${ticketId}/reply`, {
+//         method: 'POST',
+//         headers: {
+//           'Authorization': token ? `Bearer ${token}` : '',
+//           'Content-Type': 'application/json'
+//         },
+//         body: JSON.stringify({ message, isInternal: false })
+//       });
+      
+//       const data = await response.json();
+//       if (data.success) {
+//         // Refresh ticket details
+//         if (selectedTicket) {
+//           await fetchTicketDetails(selectedTicket);
+//         }
+//         // Refresh tickets list
+//         await fetchSupportTickets();
+//       }
+//     } catch (err) {
+//       console.error('Error submitting reply:', err);
+//     }
+//   };
 
 //   // Fetch positions for dropdown
 //   useEffect(() => {
@@ -221,22 +537,26 @@
 //     { 
 //       label: 'Active Projects', 
 //       value: activeRequests.filter(r => r.status !== 'closed').length.toString(), 
-//       icon: <Briefcase className="w-5 h-5" /> 
+//       icon: <Briefcase className="w-5 h-5" />,
+//       change: '+0%'
 //     },
 //     { 
 //       label: 'Total Proposals', 
 //       value: activeRequests.reduce((sum, r) => sum + r.proposals, 0).toString(), 
-//       icon: <FileText className="w-5 h-5" /> 
+//       icon: <FileText className="w-5 h-5" />,
+//       change: '0 new'
 //     },
 //     { 
 //       label: 'Interviews', 
 //       value: matches.filter(m => m.status === 'interviewing').length.toString(), 
-//       icon: <Users className="w-5 h-5" /> 
+//       icon: <Users className="w-5 h-5" />,
+//       change: '0 scheduled'
 //     },
 //     { 
 //       label: 'Time to Match', 
 //       value: '2.5 days', 
-//       icon: <Clock className="w-5 h-5" /> 
+//       icon: <Clock className="w-5 h-5" />,
+//       change: '-0.5 days'
 //     }
 //   ];
 
@@ -342,6 +662,22 @@
 //   return (
 //     <ErrorBoundary>
 //       <div className="min-h-screen bg-gray-50">
+//         {/* Contact Support Modal */}
+//         <ContactSupportModal 
+//           isOpen={isSupportModalOpen}
+//           onClose={() => setIsSupportModalOpen(false)}
+//         />
+
+//         {/* Ticket Details Modal */}
+//         {selectedTicket && (
+//           <TicketDetailsModal
+//             ticket={selectedTicket}
+//             onClose={() => setSelectedTicket(null)}
+//             onReply={handleSubmitReply}
+//             BACKEND_URL={BACKEND_URL}
+//           />
+//         )}
+
 //         {/* Mobile Sidebar Overlay */}
 //         {sidebarOpen && (
 //           <div 
@@ -355,8 +691,8 @@
 //           <div className="h-full flex flex-col">
 //             <div className="px-4 py-6 border-b border-gray-700">
 //               <div className="flex items-center space-x-3">
-//                 <div className="bg-blue-600 p-2 rounded-lg">
-//                   <Building className="w-6 h-6" />
+//                 <div className="rounded-lg">
+//                   <img src="/logo.png" alt="Logo" className="h-20 object-contain" />
 //                 </div>
 //                 <div>
 //                   <h2 className="font-bold text-lg">Client Panel</h2>
@@ -384,6 +720,7 @@
 //                 { id: 'matches', label: 'Matches', icon: <UserCheck className="w-5 h-5" /> },
 //                 { id: 'consultants', label: 'Consultants', icon: <Users className="w-5 h-5" /> },
 //                 { id: 'messages', label: 'Messages', icon: <MessageSquare className="w-5 h-5" /> },
+//                 { id: 'support', label: 'Support', icon: <LifeBuoy className="w-5 h-5" /> },
 //                 { id: 'profile', label: 'Company Profile', icon: <Building className="w-5 h-5" /> },
 //                 { id: 'settings', label: 'Settings', icon: <Settings className="w-5 h-5" /> }
 //               ].map((item) => (
@@ -429,6 +766,13 @@
 //                     <Bell className="w-6 h-6" />
 //                     <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
 //                   </button>
+//                   <button
+//                     onClick={() => setIsSupportModalOpen(true)}
+//                     className="p-2 text-gray-400 hover:text-gray-600 relative group"
+//                     title="Contact Support"
+//                   >
+//                     <HelpCircle className="w-6 h-6" />
+//                   </button>
 //                   <div className="flex items-center space-x-3">
 //                     <div className="w-8 h-8 bg-gray-900 rounded-full flex items-center justify-center text-white font-semibold">
 //                       {companyProfile.name.charAt(0)}
@@ -457,11 +801,15 @@
 //                   </button>
 //                 </div>
 
+//                 {/* Stats Grid */}
 //                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
 //                   {stats.map((stat, index) => (
 //                     <div key={index} className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
-//                       <div className="bg-blue-100 p-3 rounded-lg w-fit mb-4 text-blue-600">
-//                         {stat.icon}
+//                       <div className="flex items-center justify-between mb-4">
+//                         <div className="bg-blue-100 p-3 rounded-lg text-blue-600">
+//                           {stat.icon}
+//                         </div>
+//                         <span className="text-sm text-green-600">{stat.change}</span>
 //                       </div>
 //                       <h3 className="text-2xl font-bold text-gray-900">{stat.value}</h3>
 //                       <p className="text-gray-600 text-sm">{stat.label}</p>
@@ -469,6 +817,26 @@
 //                   ))}
 //                 </div>
 
+//                 {/* Calendar and Agenda Widgets */}
+//                 <div className="grid lg:grid-cols-2 gap-6 mb-8">
+//                   {/* Consultant Availability Calendar - View Only */}
+//                   <AvailabilityCalendar
+//                     userId={user?.email}
+//                     userType="client"
+//                     BACKEND_URL={BACKEND_URL}
+//                     readOnly={true}
+//                     onAvailabilityChange={handleAvailabilityChange}
+//                   />
+                  
+//                   {/* Agenda Widget - Shows upcoming engagements */}
+//                   <AgendaWidget
+//                     userId={user?.email}
+//                     userType="client"
+//                     BACKEND_URL={BACKEND_URL}
+//                   />
+//                 </div>
+
+//                 {/* Two Column Layout */}
 //                 <div className="grid lg:grid-cols-2 gap-6">
 //                   {/* Active Requests */}
 //                   <div className="bg-white rounded-xl shadow-sm border border-gray-200">
@@ -497,8 +865,22 @@
 //                             </div>
 //                             <p className="text-sm text-gray-600 mb-2">{request.position}</p>
 //                             <div className="flex items-center justify-between text-sm">
-//                               <span className="text-gray-600">{request.match_count} matches</span>
-//                               <span className="text-gray-400">Posted {request.posted}</span>
+//                               <div className="flex items-center space-x-4 text-gray-500">
+//                                 <span className="flex items-center">
+//                                   <MapPin className="w-4 h-4 mr-1" />
+//                                   {request.location}
+//                                 </span>
+//                                 <span className="flex items-center">
+//                                   <Clock className="w-4 h-4 mr-1" />
+//                                   {request.work_mode}
+//                                 </span>
+//                               </div>
+//                               <div className="flex items-center space-x-4">
+//                                 <span className="text-gray-600">{request.match_count} matches</span>
+//                                 <button className="text-blue-600 hover:text-blue-700 font-medium text-sm">
+//                                   View →
+//                                 </button>
+//                               </div>
 //                             </div>
 //                           </div>
 //                         ))
@@ -519,53 +901,109 @@
 //                     </div>
 //                   </div>
 
-//                   {/* Top Matches */}
+//                   {/* Support Tickets Preview */}
 //                   <div className="bg-white rounded-xl shadow-sm border border-gray-200">
 //                     <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-//                       <h2 className="text-lg font-semibold text-gray-900">Top Matches</h2>
+//                       <h2 className="text-lg font-semibold text-gray-900">Support Tickets</h2>
 //                       <button 
-//                         onClick={() => setActiveTab('matches')}
+//                         onClick={() => setActiveTab('support')}
 //                         className="text-sm text-blue-600 hover:text-blue-700"
 //                       >
 //                         View All
 //                       </button>
 //                     </div>
 //                     <div className="p-6">
-//                       {matches.length > 0 ? (
-//                         matches.slice(0, 3).map((match) => (
-//                           <div key={match.id} className="mb-4 last:mb-0 p-4 bg-gray-50 rounded-lg">
-//                             <div className="flex justify-between items-start mb-2">
-//                               <div>
-//                                 <h3 className="font-medium text-gray-900">{match.consultant}</h3>
-//                                 <p className="text-sm text-gray-600">{match.expertise}</p>
+//                       {supportLoading ? (
+//                         <div className="flex justify-center py-8">
+//                           <Loader className="w-6 h-6 animate-spin text-blue-600" />
+//                         </div>
+//                       ) : supportTickets.length > 0 ? (
+//                         <div className="space-y-3">
+//                           {supportTickets.slice(0, 2).map((ticket) => (
+//                             <div
+//                               key={ticket._id}
+//                               onClick={() => fetchTicketDetails(ticket)}
+//                               className="p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer transition"
+//                             >
+//                               <div className="flex items-center justify-between mb-1">
+//                                 <span className="text-xs font-mono text-blue-600">{ticket.ticketId}</span>
+//                                 <span className={`px-2 py-0.5 text-xs rounded-full ${
+//                                   ticket.status === 'new' ? 'bg-yellow-100 text-yellow-800' :
+//                                   ticket.status === 'in_progress' ? 'bg-blue-100 text-blue-800' :
+//                                   'bg-green-100 text-green-800'
+//                                 }`}>
+//                                   {ticket.status}
+//                                 </span>
 //                               </div>
-//                               <div className="text-right">
-//                                 <span className="text-sm font-medium text-green-600">{match.matchScore}% match</span>
-//                               </div>
+//                               <p className="text-sm font-medium text-gray-900 truncate">{ticket.subject}</p>
+//                               <p className="text-xs text-gray-500 mt-1">
+//                                 {new Date(ticket.createdAt).toLocaleDateString()}
+//                               </p>
 //                             </div>
-//                             <div className="flex items-center justify-between text-sm mt-2">
-//                               <span className="text-gray-600">{match.proposedRate}</span>
-//                               <button 
-//                                 onClick={() => handleContactConsultant(match.id)}
-//                                 className="text-blue-600 hover:text-blue-700"
-//                               >
-//                                 Contact
-//                               </button>
-//                             </div>
-//                           </div>
-//                         ))
+//                           ))}
+//                         </div>
 //                       ) : (
-//                         <div className="text-center py-8">
-//                           <div className="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-//                             <UserCheck className="w-8 h-8 text-gray-400" />
+//                         <div className="text-center py-6">
+//                           <div className="bg-gray-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
+//                             <Ticket className="w-6 h-6 text-gray-400" />
 //                           </div>
-//                           <p className="text-gray-500 mb-2">No matches yet</p>
-//                           <p className="text-sm text-gray-400">Create a request to get matched</p>
+//                           <p className="text-gray-500 text-sm mb-2">No support tickets</p>
+//                           <button
+//                             onClick={() => setIsSupportModalOpen(true)}
+//                             className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+//                           >
+//                             Contact Support →
+//                           </button>
 //                         </div>
 //                       )}
 //                     </div>
 //                   </div>
 //                 </div>
+
+//                 {/* Top Matches Section */}
+//                 {matches.length > 0 && (
+//                   <div className="mt-6 bg-white rounded-xl shadow-sm border border-gray-200">
+//                     <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+//                       <h2 className="text-lg font-semibold text-gray-900">Top Consultant Matches</h2>
+//                       <button 
+//                         onClick={() => setActiveTab('matches')}
+//                         className="text-sm text-blue-600 hover:text-blue-700"
+//                       >
+//                         View All Matches
+//                       </button>
+//                     </div>
+//                     <div className="p-6">
+//                       <div className="grid md:grid-cols-2 gap-4">
+//                         {matches.slice(0, 2).map((match) => (
+//                           <div key={match.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition">
+//                             <div className="flex items-start justify-between mb-3">
+//                               <div>
+//                                 <h3 className="font-semibold text-gray-900">{match.consultant}</h3>
+//                                 <p className="text-sm text-gray-600">{match.expertise}</p>
+//                               </div>
+//                               <div className="flex items-center">
+//                                 <Star className="w-4 h-4 text-yellow-400 fill-current" />
+//                                 <span className="text-sm font-medium ml-1">{match.matchScore}%</span>
+//                               </div>
+//                             </div>
+//                             <div className="flex items-center justify-between text-sm">
+//                               <div className="flex items-center space-x-2 text-gray-500">
+//                                 <MapPin className="w-4 h-4" />
+//                                 <span>{match.location}</span>
+//                               </div>
+//                               <button 
+//                                 onClick={() => handleContactConsultant(match.id)}
+//                                 className="text-blue-600 hover:text-blue-700 font-medium text-sm"
+//                               >
+//                                 Contact →
+//                               </button>
+//                             </div>
+//                           </div>
+//                         ))}
+//                       </div>
+//                     </div>
+//                   </div>
+//                 )}
 //               </>
 //             )}
 
@@ -632,6 +1070,233 @@
 //                     </button>
 //                   </div>
 //                 )}
+//               </div>
+//             )}
+
+//             {/* Matches Tab */}
+//             {activeTab === 'matches' && (
+//               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+//                 <h2 className="text-xl font-bold text-gray-900 mb-6">Consultant Matches</h2>
+                
+//                 {matches.length > 0 ? (
+//                   <div className="space-y-4">
+//                     {matches.map((match) => (
+//                       <div key={match.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition">
+//                         <div className="flex justify-between items-start mb-3">
+//                           <div>
+//                             <div className="flex items-center space-x-2 mb-1">
+//                               <h3 className="font-semibold text-gray-900">{match.consultant}</h3>
+//                               <div className="flex items-center">
+//                                 <Star className="w-4 h-4 text-yellow-400 fill-current" />
+//                                 <span className="text-sm font-medium ml-1">{match.matchScore}%</span>
+//                               </div>
+//                             </div>
+//                             <p className="text-sm text-gray-600">{match.expertise}</p>
+//                           </div>
+//                           <span className={`px-3 py-1 text-xs rounded-full ${getStatusColor(match.status)}`}>
+//                             {match.status}
+//                           </span>
+//                         </div>
+//                         <div className="grid grid-cols-2 gap-4 mb-3 text-sm">
+//                           <div className="flex items-center text-gray-500">
+//                             <MapPin className="w-4 h-4 mr-1" />
+//                             {match.location}
+//                           </div>
+//                           <div className="flex items-center text-gray-500">
+//                             <DollarSign className="w-4 h-4 mr-1" />
+//                             {match.proposedRate}
+//                           </div>
+//                         </div>
+//                         <div className="flex justify-end">
+//                           <button 
+//                             onClick={() => handleContactConsultant(match.id)}
+//                             className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 text-sm"
+//                           >
+//                             Contact Consultant
+//                           </button>
+//                         </div>
+//                       </div>
+//                     ))}
+//                   </div>
+//                 ) : (
+//                   <div className="text-center py-12">
+//                     <div className="bg-gray-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+//                       <UserCheck className="w-10 h-10 text-gray-400" />
+//                     </div>
+//                     <h3 className="text-lg font-medium text-gray-900 mb-2">No matches yet</h3>
+//                     <p className="text-gray-500 mb-6">Create a project request to get matched with consultants</p>
+//                     <button
+//                       onClick={() => setShowNewRequestModal(true)}
+//                       className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700"
+//                     >
+//                       Create Request
+//                     </button>
+//                   </div>
+//                 )}
+//               </div>
+//             )}
+
+//             {/* Consultants Tab - Browse Available Consultants */}
+//             {activeTab === 'consultants' && (
+//               <div className="space-y-6">
+//                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+//                   <div className="flex justify-between items-center mb-6">
+//                     <div>
+//                       <h2 className="text-xl font-bold text-gray-900">Browse Consultants</h2>
+//                       <p className="text-gray-600 mt-1">Find and connect with top consultants</p>
+//                     </div>
+//                     <div className="flex items-center space-x-2">
+//                       <div className="relative">
+//                         <Search className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+//                         <input
+//                           type="text"
+//                           placeholder="Search consultants..."
+//                           className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+//                         />
+//                       </div>
+//                       <button className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+//                         <Filter className="w-5 h-5 text-gray-500" />
+//                       </button>
+//                     </div>
+//                   </div>
+
+//                   <div className="text-center py-12">
+//                     <div className="bg-gray-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+//                       <Users className="w-10 h-10 text-gray-400" />
+//                     </div>
+//                     <h3 className="text-lg font-medium text-gray-900 mb-2">Consultant Directory Coming Soon</h3>
+//                     <p className="text-gray-500">Create a project request and we'll find the best matches for you</p>
+//                     <button
+//                       onClick={() => setShowNewRequestModal(true)}
+//                       className="mt-4 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
+//                     >
+//                       Create Request
+//                     </button>
+//                   </div>
+//                 </div>
+
+//                 {/* Consultant Availability Calendar Preview */}
+//                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+//                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Consultant Availability Overview</h3>
+//                   <p className="text-sm text-gray-500 mb-4">View when consultants are available for new projects</p>
+//                   <AvailabilityCalendar
+//                     userId="all" // This would show aggregated availability
+//                     userType="client"
+//                     BACKEND_URL={BACKEND_URL}
+//                     readOnly={true}
+//                     compact={true}
+//                   />
+//                 </div>
+//               </div>
+//             )}
+
+//             {/* Support Tab */}
+//             {activeTab === 'support' && (
+//               <div className="space-y-6">
+//                 {/* Support Header */}
+//                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+//                   <div className="flex items-center justify-between">
+//                     <div>
+//                       <h2 className="text-2xl font-bold text-gray-900">Support Center</h2>
+//                       <p className="text-gray-600 mt-1">Get help with your projects, account, or technical issues</p>
+//                     </div>
+//                     <button
+//                       onClick={() => setIsSupportModalOpen(true)}
+//                       className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition font-medium flex items-center"
+//                     >
+//                       <HelpCircle className="w-5 h-5 mr-2" />
+//                       Contact Support
+//                     </button>
+//                   </div>
+//                 </div>
+
+//                 {/* Quick Support Options */}
+//                 <div className="grid md:grid-cols-3 gap-4">
+//                   <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center hover:shadow-md transition">
+//                     <div className="bg-blue-100 w-12 h-12 rounded-lg flex items-center justify-center mx-auto mb-4">
+//                       <Mail className="w-6 h-6 text-blue-600" />
+//                     </div>
+//                     <h3 className="font-semibold text-gray-900 mb-2">Email Support</h3>
+//                     <p className="text-sm text-gray-600 mb-3">support@webconsultanthub.com</p>
+//                     <p className="text-xs text-gray-500">Reply within 24 hours</p>
+//                   </div>
+
+//                   <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center hover:shadow-md transition">
+//                     <div className="bg-green-100 w-12 h-12 rounded-lg flex items-center justify-center mx-auto mb-4">
+//                       <MessageSquare className="w-6 h-6 text-green-600" />
+//                     </div>
+//                     <h3 className="font-semibold text-gray-900 mb-2">Live Chat</h3>
+//                     <p className="text-sm text-gray-600 mb-3">Chat with support team</p>
+//                     <p className="text-xs text-gray-500">Available 24/7</p>
+//                   </div>
+
+//                   <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center hover:shadow-md transition">
+//                     <div className="bg-purple-100 w-12 h-12 rounded-lg flex items-center justify-center mx-auto mb-4">
+//                       <FileText className="w-6 h-6 text-purple-600" />
+//                     </div>
+//                     <h3 className="font-semibold text-gray-900 mb-2">Help Center</h3>
+//                     <p className="text-sm text-gray-600 mb-3">Browse knowledge base</p>
+//                     <p className="text-xs text-gray-500">Self-service resources</p>
+//                   </div>
+//                 </div>
+
+//                 {/* Support Tickets */}
+//                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+//                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Your Support Tickets</h3>
+                  
+//                   {supportLoading ? (
+//                     <div className="flex justify-center py-8">
+//                       <Loader className="w-8 h-8 animate-spin text-blue-600" />
+//                     </div>
+//                   ) : supportTickets.length > 0 ? (
+//                     <div className="space-y-4">
+//                       {supportTickets.map((ticket) => (
+//                         <SupportTicket
+//                           key={ticket._id}
+//                           ticket={ticket}
+//                           onViewDetails={fetchTicketDetails}
+//                         />
+//                       ))}
+//                     </div>
+//                   ) : (
+//                     <div className="text-center py-12">
+//                       <div className="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+//                         <Ticket className="w-8 h-8 text-gray-400" />
+//                       </div>
+//                       <h3 className="text-lg font-medium text-gray-900 mb-2">No support tickets</h3>
+//                       <p className="text-gray-500 mb-4">You haven't created any support tickets yet</p>
+//                       <button
+//                         onClick={() => setIsSupportModalOpen(true)}
+//                         className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition font-medium"
+//                       >
+//                         Create Support Ticket
+//                       </button>
+//                     </div>
+//                   )}
+//                 </div>
+
+//                 {/* FAQ Section */}
+//                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+//                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Frequently Asked Questions</h3>
+//                   <div className="space-y-4">
+//                     <div className="border-b border-gray-200 pb-4">
+//                       <h4 className="font-medium text-gray-900 mb-2">How do I create a new project request?</h4>
+//                       <p className="text-sm text-gray-600">Click on the "New Request" button in your dashboard or navigate to the Requests tab and click "Create New Request". Fill in the project details and submit.</p>
+//                     </div>
+//                     <div className="border-b border-gray-200 pb-4">
+//                       <h4 className="font-medium text-gray-900 mb-2">How long does it take to get matches?</h4>
+//                       <p className="text-sm text-gray-600">Our average match time is 48 hours. Our admin team manually reviews each request to find the most suitable consultants.</p>
+//                     </div>
+//                     <div className="border-b border-gray-200 pb-4">
+//                       <h4 className="font-medium text-gray-900 mb-2">Can I communicate with consultants directly?</h4>
+//                       <p className="text-sm text-gray-600">Yes, after a match is made and both parties express interest, you'll be able to communicate directly through our messaging system.</p>
+//                     </div>
+//                     <div>
+//                       <h4 className="font-medium text-gray-900 mb-2">What if I'm not satisfied with a match?</h4>
+//                       <p className="text-sm text-gray-600">If a consultant isn't the right fit, contact our support team. We'll work with you to find alternative matches until you're satisfied.</p>
+//                     </div>
+//                   </div>
+//                 </div>
 //               </div>
 //             )}
 
@@ -707,6 +1372,52 @@
 //                         <span className="text-sm text-green-700">Verified Company</span>
 //                       </div>
 //                     )}
+//                   </div>
+//                 </div>
+//               </div>
+//             )}
+
+//             {/* Settings Tab */}
+//             {activeTab === 'settings' && (
+//               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+//                 <h2 className="text-xl font-bold text-gray-900 mb-6">Settings</h2>
+//                 <div className="space-y-6">
+//                   <div>
+//                     <h3 className="text-lg font-medium text-gray-900 mb-4">Notification Preferences</h3>
+//                     <div className="space-y-3">
+//                       <label className="flex items-center">
+//                         <input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+//                         <span className="ml-2 text-gray-700">Email notifications for new matches</span>
+//                       </label>
+//                       <label className="flex items-center">
+//                         <input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+//                         <span className="ml-2 text-gray-700">Email notifications for proposal updates</span>
+//                       </label>
+//                       <label className="flex items-center">
+//                         <input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+//                         <span className="ml-2 text-gray-700">Weekly project summaries</span>
+//                       </label>
+//                     </div>
+//                   </div>
+                  
+//                   <div>
+//                     <h3 className="text-lg font-medium text-gray-900 mb-4">Privacy Settings</h3>
+//                     <div className="space-y-3">
+//                       <label className="flex items-center">
+//                         <input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+//                         <span className="ml-2 text-gray-700">Show company profile to consultants</span>
+//                       </label>
+//                       <label className="flex items-center">
+//                         <input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+//                         <span className="ml-2 text-gray-700">Share contact information with matched consultants</span>
+//                       </label>
+//                     </div>
+//                   </div>
+                  
+//                   <div className="pt-4 border-t border-gray-200">
+//                     <button className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 text-sm">
+//                       Delete Account
+//                     </button>
 //                   </div>
 //                 </div>
 //               </div>
@@ -932,7 +1643,10 @@
 // export default ClientDashboard;
 
 
-// src/page/client/Dashboard.jsx
+
+
+// src/page/client/Dashboard.jsx (Updated with Calendar & Agenda Tab)
+
 import React, { useState, useEffect } from 'react';
 import {
   Briefcase,
@@ -966,11 +1680,17 @@ import {
   ChevronRight,
   Mail,
   Phone,
-  ExternalLink
+  ExternalLink,
+  TrendingUp,
+  Link as LinkIcon,
+  Grid,
+  List
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import ContactSupportModal from '../../components/modals/ContactSupportModal';
+import AvailabilityCalendar from '../../components/AvailabilityCalendar';
+import AgendaWidget from '../../components/AgendaWidget';
 
 // Error Boundary Component
 class ErrorBoundary extends React.Component {
@@ -1012,7 +1732,7 @@ class ErrorBoundary extends React.Component {
   }
 }
 
-// Support Ticket Component
+// Support Ticket Component (same as before)
 const SupportTicket = ({ ticket, onViewDetails }) => {
   const getStatusColor = (status) => {
     switch(status) {
@@ -1079,7 +1799,7 @@ const SupportTicket = ({ ticket, onViewDetails }) => {
   );
 };
 
-// Ticket Details Modal
+// Ticket Details Modal (same as before)
 const TicketDetailsModal = ({ ticket, onClose, onReply, BACKEND_URL }) => {
   const [replyMessage, setReplyMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -1225,6 +1945,8 @@ const ClientDashboard = () => {
   const [supportTickets, setSupportTickets] = useState([]);
   const [supportLoading, setSupportLoading] = useState(false);
   const [positions, setPositions] = useState([]);
+  const [availabilityData, setAvailabilityData] = useState({});
+  const [calendarView, setCalendarView] = useState('full'); // 'full' or 'compact'
   const [dashboardData, setDashboardData] = useState({
     profile: null,
     requests: [],
@@ -1245,6 +1967,12 @@ const ClientDashboard = () => {
     work_city: '',
     work_mode: 'remote'
   });
+
+  // Handle availability change (for viewing consultant availability)
+  const handleAvailabilityChange = (date, status, timeRange) => {
+    console.log('Consultant availability viewed:', { date, status, timeRange });
+    // This is for viewing purposes only - clients can see consultant availability
+  };
 
   // Fetch dashboard data
   useEffect(() => {
@@ -1278,6 +2006,11 @@ const ClientDashboard = () => {
             requests: Array.isArray(result.data.requests) ? result.data.requests : [],
             matches: Array.isArray(result.data.matches) ? result.data.matches : []
           });
+
+          // Load availability data if exists
+          if (result.data.profile?.availability) {
+            setAvailabilityData(result.data.profile.availability);
+          }
 
           // Fetch support tickets after dashboard data
           await fetchSupportTickets();
@@ -1364,11 +2097,9 @@ const ClientDashboard = () => {
       
       const data = await response.json();
       if (data.success) {
-        // Refresh ticket details
         if (selectedTicket) {
           await fetchTicketDetails(selectedTicket);
         }
-        // Refresh tickets list
         await fetchSupportTickets();
       }
     } catch (err) {
@@ -1453,22 +2184,26 @@ const ClientDashboard = () => {
     { 
       label: 'Active Projects', 
       value: activeRequests.filter(r => r.status !== 'closed').length.toString(), 
-      icon: <Briefcase className="w-5 h-5" /> 
+      icon: <Briefcase className="w-5 h-5" />,
+      change: '+0%'
     },
     { 
       label: 'Total Proposals', 
       value: activeRequests.reduce((sum, r) => sum + r.proposals, 0).toString(), 
-      icon: <FileText className="w-5 h-5" /> 
+      icon: <FileText className="w-5 h-5" />,
+      change: '0 new'
     },
     { 
       label: 'Interviews', 
       value: matches.filter(m => m.status === 'interviewing').length.toString(), 
-      icon: <Users className="w-5 h-5" /> 
+      icon: <Users className="w-5 h-5" />,
+      change: '0 scheduled'
     },
     { 
       label: 'Time to Match', 
       value: '2.5 days', 
-      icon: <Clock className="w-5 h-5" /> 
+      icon: <Clock className="w-5 h-5" />,
+      change: '-0.5 days'
     }
   ];
 
@@ -1517,7 +2252,6 @@ const ClientDashboard = () => {
 
       if (result.success) {
         setShowNewRequestModal(false);
-        // Refresh dashboard data
         window.location.reload();
       } else {
         setError(result.error || 'Failed to create request');
@@ -1531,12 +2265,10 @@ const ClientDashboard = () => {
   };
 
   const handleViewRequest = (requestId) => {
-    // Navigate to request details
     console.log('View request:', requestId);
   };
 
   const handleContactConsultant = (matchId) => {
-    // Navigate to messaging
     console.log('Contact consultant:', matchId);
   };
 
@@ -1604,7 +2336,7 @@ const ClientDashboard = () => {
             <div className="px-4 py-6 border-b border-gray-700">
               <div className="flex items-center space-x-3">
                 <div className="rounded-lg">
-              <img src="/logo.png" alt="Logo" className="h-20 object-contain" />
+                  <img src="/logo.png" alt="Logo" className="h-20 object-contain" />
                 </div>
                 <div>
                   <h2 className="font-bold text-lg">Client Panel</h2>
@@ -1628,6 +2360,7 @@ const ClientDashboard = () => {
             <nav className="flex-1 px-2 py-4 space-y-1">
               {[
                 { id: 'overview', label: 'Overview', icon: <Target className="w-5 h-5" /> },
+                { id: 'calendar', label: 'Calendar & Agenda', icon: <Calendar className="w-5 h-5" /> },
                 { id: 'requests', label: 'My Requests', icon: <FileText className="w-5 h-5" /> },
                 { id: 'matches', label: 'Matches', icon: <UserCheck className="w-5 h-5" /> },
                 { id: 'consultants', label: 'Consultants', icon: <Users className="w-5 h-5" /> },
@@ -1713,11 +2446,15 @@ const ClientDashboard = () => {
                   </button>
                 </div>
 
+                {/* Stats Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                   {stats.map((stat, index) => (
                     <div key={index} className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
-                      <div className="bg-blue-100 p-3 rounded-lg w-fit mb-4 text-blue-600">
-                        {stat.icon}
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="bg-blue-100 p-3 rounded-lg text-blue-600">
+                          {stat.icon}
+                        </div>
+                        <span className="text-sm text-green-600">{stat.change}</span>
                       </div>
                       <h3 className="text-2xl font-bold text-gray-900">{stat.value}</h3>
                       <p className="text-gray-600 text-sm">{stat.label}</p>
@@ -1725,6 +2462,36 @@ const ClientDashboard = () => {
                   ))}
                 </div>
 
+                {/* Quick Calendar Preview */}
+                <div className="mb-8 bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                  <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-lg font-semibold text-gray-900">Consultant Schedule Preview</h2>
+                    <button 
+                      onClick={() => setActiveTab('calendar')}
+                      className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                    >
+                      View Full Calendar →
+                    </button>
+                  </div>
+                  <div className="grid lg:grid-cols-2 gap-6">
+                    <AvailabilityCalendar
+                      userId={user?.email}
+                      userType="client"
+                      BACKEND_URL={BACKEND_URL}
+                      readOnly={true}
+                      onAvailabilityChange={handleAvailabilityChange}
+                      compact={true}
+                    />
+                    <AgendaWidget
+                      userId={user?.email}
+                      userType="client"
+                      BACKEND_URL={BACKEND_URL}
+                      compact={true}
+                    />
+                  </div>
+                </div>
+
+                {/* Two Column Layout */}
                 <div className="grid lg:grid-cols-2 gap-6">
                   {/* Active Requests */}
                   <div className="bg-white rounded-xl shadow-sm border border-gray-200">
@@ -1753,8 +2520,22 @@ const ClientDashboard = () => {
                             </div>
                             <p className="text-sm text-gray-600 mb-2">{request.position}</p>
                             <div className="flex items-center justify-between text-sm">
-                              <span className="text-gray-600">{request.match_count} matches</span>
-                              <span className="text-gray-400">Posted {request.posted}</span>
+                              <div className="flex items-center space-x-4 text-gray-500">
+                                <span className="flex items-center">
+                                  <MapPin className="w-4 h-4 mr-1" />
+                                  {request.location}
+                                </span>
+                                <span className="flex items-center">
+                                  <Clock className="w-4 h-4 mr-1" />
+                                  {request.work_mode}
+                                </span>
+                              </div>
+                              <div className="flex items-center space-x-4">
+                                <span className="text-gray-600">{request.match_count} matches</span>
+                                <button className="text-blue-600 hover:text-blue-700 font-medium text-sm">
+                                  View →
+                                </button>
+                              </div>
                             </div>
                           </div>
                         ))
@@ -1833,7 +2614,173 @@ const ClientDashboard = () => {
                     </div>
                   </div>
                 </div>
+
+                {/* Top Matches Section */}
+                {matches.length > 0 && (
+                  <div className="mt-6 bg-white rounded-xl shadow-sm border border-gray-200">
+                    <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                      <h2 className="text-lg font-semibold text-gray-900">Top Consultant Matches</h2>
+                      <button 
+                        onClick={() => setActiveTab('matches')}
+                        className="text-sm text-blue-600 hover:text-blue-700"
+                      >
+                        View All Matches
+                      </button>
+                    </div>
+                    <div className="p-6">
+                      <div className="grid md:grid-cols-2 gap-4">
+                        {matches.slice(0, 2).map((match) => (
+                          <div key={match.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition">
+                            <div className="flex items-start justify-between mb-3">
+                              <div>
+                                <h3 className="font-semibold text-gray-900">{match.consultant}</h3>
+                                <p className="text-sm text-gray-600">{match.expertise}</p>
+                              </div>
+                              <div className="flex items-center">
+                                <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                                <span className="text-sm font-medium ml-1">{match.matchScore}%</span>
+                              </div>
+                            </div>
+                            <div className="flex items-center justify-between text-sm">
+                              <div className="flex items-center space-x-2 text-gray-500">
+                                <MapPin className="w-4 h-4" />
+                                <span>{match.location}</span>
+                              </div>
+                              <button 
+                                onClick={() => handleContactConsultant(match.id)}
+                                className="text-blue-600 hover:text-blue-700 font-medium text-sm"
+                              >
+                                Contact →
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </>
+            )}
+
+            {/* NEW: Calendar & Agenda Tab */}
+            {activeTab === 'calendar' && (
+              <div className="space-y-6">
+                {/* Header */}
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h1 className="text-2xl font-bold text-gray-900">Consultant Availability & Agenda</h1>
+                    <p className="text-gray-600 mt-1">View consultant availability and track your upcoming engagements</p>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() => setCalendarView('full')}
+                      className={`p-2 rounded-lg transition ${
+                        calendarView === 'full' 
+                          ? 'bg-blue-100 text-blue-600' 
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
+                      title="Full View"
+                    >
+                      <Grid className="w-5 h-5" />
+                    </button>
+                    <button
+                      onClick={() => setCalendarView('compact')}
+                      className={`p-2 rounded-lg transition ${
+                        calendarView === 'compact' 
+                          ? 'bg-blue-100 text-blue-600' 
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
+                      title="Compact View"
+                    >
+                      <List className="w-5 h-5" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Calendar and Agenda Layout */}
+                <div className={`grid ${calendarView === 'full' ? 'lg:grid-cols-3' : 'lg:grid-cols-2'} gap-6`}>
+                  {/* Consultant Availability Calendar Section */}
+                  <div className={calendarView === 'full' ? 'lg:col-span-2' : 'lg:col-span-1'}>
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                      <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <Calendar className="w-5 h-5 mr-2 text-blue-600" />
+                        Consultant Availability Calendar
+                      </h2>
+                      <p className="text-sm text-gray-500 mb-4">
+                        View when consultants are available for new projects. Green dates show available consultants.
+                      </p>
+                      <AvailabilityCalendar
+                        userId="all"
+                        userType="client"
+                        BACKEND_URL={BACKEND_URL}
+                        readOnly={true}
+                        onAvailabilityChange={handleAvailabilityChange}
+                        compact={calendarView === 'compact'}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Agenda Widget Section */}
+                  <div className={calendarView === 'full' ? 'lg:col-span-1' : 'lg:col-span-1'}>
+                    <AgendaWidget
+                      userId={user?.email}
+                      userType="client"
+                      BACKEND_URL={BACKEND_URL}
+                      compact={calendarView === 'compact'}
+                    />
+                  </div>
+                </div>
+
+                {/* Upcoming Interviews Section */}
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                  <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <MessageSquare className="w-5 h-5 mr-2 text-green-600" />
+                    Upcoming Interviews
+                  </h2>
+                  {matches.filter(m => m.status === 'shortlisted' || m.status === 'interviewing').length > 0 ? (
+                    <div className="space-y-3">
+                      {matches.filter(m => m.status === 'shortlisted' || m.status === 'interviewing').map((match) => (
+                        <div key={match.id} className="flex items-center justify-between p-4 bg-green-50 rounded-lg border border-green-200">
+                          <div>
+                            <p className="font-medium text-gray-900">{match.consultant}</p>
+                            <p className="text-sm text-gray-600">{match.expertise}</p>
+                          </div>
+                          <div className="text-right">
+                            <span className="inline-block px-2 py-1 text-xs rounded-full bg-green-100 text-green-800 mb-1">
+                              {match.status === 'shortlisted' ? 'Shortlisted' : 'Interview Scheduled'}
+                            </span>
+                            <button 
+                              onClick={() => handleContactConsultant(match.id)}
+                              className="block text-sm text-blue-600 hover:text-blue-700 mt-1"
+                            >
+                              Schedule Interview →
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-gray-500">
+                      <p>No upcoming interviews</p>
+                      <p className="text-sm mt-1">When consultants are shortlisted, interviews will appear here</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Consultant Availability Tips */}
+                <div className="bg-blue-50 rounded-xl border border-blue-200 p-6">
+                  <h3 className="font-semibold text-blue-900 mb-2 flex items-center">
+                    <HelpCircle className="w-5 h-5 mr-2" />
+                    Consultant Availability Tips
+                  </h3>
+                  <ul className="text-sm text-blue-800 space-y-1">
+                    <li>• Green dates show when consultants are available for new projects</li>
+                    <li>• Click on any date to see which consultants are available that day</li>
+                    <li>• Create a request to get matched with available consultants</li>
+                    <li>• Once matched, you'll be able to schedule interviews directly</li>
+                  </ul>
+                </div>
+              </div>
             )}
 
             {/* Requests Tab */}
@@ -1899,6 +2846,110 @@ const ClientDashboard = () => {
                     </button>
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* Matches Tab */}
+            {activeTab === 'matches' && (
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h2 className="text-xl font-bold text-gray-900 mb-6">Consultant Matches</h2>
+                
+                {matches.length > 0 ? (
+                  <div className="space-y-4">
+                    {matches.map((match) => (
+                      <div key={match.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition">
+                        <div className="flex justify-between items-start mb-3">
+                          <div>
+                            <div className="flex items-center space-x-2 mb-1">
+                              <h3 className="font-semibold text-gray-900">{match.consultant}</h3>
+                              <div className="flex items-center">
+                                <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                                <span className="text-sm font-medium ml-1">{match.matchScore}%</span>
+                              </div>
+                            </div>
+                            <p className="text-sm text-gray-600">{match.expertise}</p>
+                          </div>
+                          <span className={`px-3 py-1 text-xs rounded-full ${getStatusColor(match.status)}`}>
+                            {match.status}
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4 mb-3 text-sm">
+                          <div className="flex items-center text-gray-500">
+                            <MapPin className="w-4 h-4 mr-1" />
+                            {match.location}
+                          </div>
+                          <div className="flex items-center text-gray-500">
+                            <DollarSign className="w-4 h-4 mr-1" />
+                            {match.proposedRate}
+                          </div>
+                        </div>
+                        <div className="flex justify-end">
+                          <button 
+                            onClick={() => handleContactConsultant(match.id)}
+                            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 text-sm"
+                          >
+                            Contact Consultant
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <div className="bg-gray-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <UserCheck className="w-10 h-10 text-gray-400" />
+                    </div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">No matches yet</h3>
+                    <p className="text-gray-500 mb-6">Create a project request to get matched with consultants</p>
+                    <button
+                      onClick={() => setShowNewRequestModal(true)}
+                      className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700"
+                    >
+                      Create Request
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Consultants Tab - Browse Available Consultants */}
+            {activeTab === 'consultants' && (
+              <div className="space-y-6">
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                  <div className="flex justify-between items-center mb-6">
+                    <div>
+                      <h2 className="text-xl font-bold text-gray-900">Browse Consultants</h2>
+                      <p className="text-gray-600 mt-1">Find and connect with top consultants</p>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <div className="relative">
+                        <Search className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                        <input
+                          type="text"
+                          placeholder="Search consultants..."
+                          className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        />
+                      </div>
+                      <button className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+                        <Filter className="w-5 h-5 text-gray-500" />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="text-center py-12">
+                    <div className="bg-gray-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Users className="w-10 h-10 text-gray-400" />
+                    </div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">Consultant Directory Coming Soon</h3>
+                    <p className="text-gray-500">Create a project request and we'll find the best matches for you</p>
+                    <button
+                      onClick={() => setShowNewRequestModal(true)}
+                      className="mt-4 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
+                    >
+                      Create Request
+                    </button>
+                  </div>
+                </div>
               </div>
             )}
 
@@ -2084,6 +3135,52 @@ const ClientDashboard = () => {
                         <span className="text-sm text-green-700">Verified Company</span>
                       </div>
                     )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Settings Tab */}
+            {activeTab === 'settings' && (
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h2 className="text-xl font-bold text-gray-900 mb-6">Settings</h2>
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-4">Notification Preferences</h3>
+                    <div className="space-y-3">
+                      <label className="flex items-center">
+                        <input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                        <span className="ml-2 text-gray-700">Email notifications for new matches</span>
+                      </label>
+                      <label className="flex items-center">
+                        <input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                        <span className="ml-2 text-gray-700">Email notifications for proposal updates</span>
+                      </label>
+                      <label className="flex items-center">
+                        <input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                        <span className="ml-2 text-gray-700">Weekly project summaries</span>
+                      </label>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-4">Privacy Settings</h3>
+                    <div className="space-y-3">
+                      <label className="flex items-center">
+                        <input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                        <span className="ml-2 text-gray-700">Show company profile to consultants</span>
+                      </label>
+                      <label className="flex items-center">
+                        <input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                        <span className="ml-2 text-gray-700">Share contact information with matched consultants</span>
+                      </label>
+                    </div>
+                  </div>
+                  
+                  <div className="pt-4 border-t border-gray-200">
+                    <button className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 text-sm">
+                      Delete Account
+                    </button>
                   </div>
                 </div>
               </div>

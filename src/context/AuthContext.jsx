@@ -1,3 +1,5 @@
+
+
 // // src/context/AuthContext.jsx
 // import React, { createContext, useState, useContext, useEffect } from 'react';
 
@@ -36,7 +38,6 @@
 //   const checkAuth = async () => {
 //     const token = localStorage.getItem('auth_token');
 //     const userData = localStorage.getItem('user_data');
-//     const paymentVerified = localStorage.getItem('payment_verified') === 'true';
     
 //     if (token && userData) {
 //       try {
@@ -51,73 +52,41 @@
 //           // Token is valid, set user
 //           setUser(parsedUser);
           
-//           // Check if we already have payment verified from recent login
-//           if (paymentVerified) {
-//             console.log('✅ Using payment verified flag, skipping profile fetch');
-            
-//             // Load profile completion from localStorage but ensure payment is true
-//             const savedCompletion = localStorage.getItem('profile_completion');
-//             if (savedCompletion) {
-//               const completion = JSON.parse(savedCompletion);
-//               // Ensure payment is true if we have the flag
-//               if (paymentVerified && !completion.payment) {
-//                 completion.payment = true;
-//                 completion.status = 'complete';
-//               }
-//               setProfileCompletion(completion);
-//               localStorage.setItem('profile_completion', JSON.stringify(completion));
-//             }
-//           } else {
-//             // No payment verified flag, fetch fresh data from backend
-//             try {
-//               const profileResponse = await fetch(`${BACKEND_URL}/api/get-consultant-signup-data?email=${parsedUser.email}`);
-              
-//               if (profileResponse.ok) {
-//                 const profileData = await profileResponse.json();
-                
-//                 if (profileData.success && profileData.data) {
-//                   // Check subscription status - need to get this from a separate endpoint ideally
-//                   // For now, check localStorage
-//                   const paymentComplete = localStorage.getItem('subscription_complete') === 'true';
-                  
-//                   // Check availability from localStorage
-//                   const availabilityComplete = localStorage.getItem('profile_setup_complete') === 'availability' || 
-//                                               localStorage.getItem('consultant_availability') !== null;
-                  
-//                   const newCompletion = {
-//                     basicInfo: !!(profileData.data.fullName),
-//                     availability: availabilityComplete,
-//                     payment: paymentComplete,
-//                     status: paymentComplete ? 'complete' : 
-//                             (!!(profileData.data.fullName) ? 'partial' : 'incomplete')
-//                   };
-                  
-//                   console.log('📊 Setting profile completion from checkAuth:', newCompletion);
-//                   setProfileCompletion(newCompletion);
-//                   localStorage.setItem('profile_completion', JSON.stringify(newCompletion));
-//                 } else {
-//                   // Fallback to stored completion
-//                   const savedCompletion = localStorage.getItem('profile_completion');
-//                   if (savedCompletion) {
-//                     setProfileCompletion(JSON.parse(savedCompletion));
-//                   }
-//                 }
-//               } else {
-//                 // Fallback to stored completion
-//                 const savedCompletion = localStorage.getItem('profile_completion');
-//                 if (savedCompletion) {
-//                   setProfileCompletion(JSON.parse(savedCompletion));
-//                 }
-//               }
-//             } catch (profileErr) {
-//               console.error('Error fetching profile:', profileErr);
-//               // Fallback to stored completion
-//               const savedCompletion = localStorage.getItem('profile_completion');
-//               if (savedCompletion) {
-//                 setProfileCompletion(JSON.parse(savedCompletion));
-//               }
-//             }
-//           }
+//           // IMPORTANT: First check if we have subscription_complete in localStorage
+//           const subscriptionComplete = localStorage.getItem('subscription_complete') === 'true';
+//           const profileSetupComplete = localStorage.getItem('profile_setup_complete');
+//           const availabilityExists = localStorage.getItem('consultant_availability') !== null;
+          
+//           // Calculate availability status
+//           const availabilityComplete = profileSetupComplete === 'availability' || 
+//                                       profileSetupComplete === 'complete' || 
+//                                       availabilityExists;
+          
+//           // Get basic info from user data or localStorage
+//           const basicInfoComplete = !!(parsedUser.fullName) || 
+//                                    localStorage.getItem('consultant_basic_complete') === 'true' ||
+//                                    localStorage.getItem('consultant_signup_data') !== null;
+          
+//           console.log('📊 checkAuth - Calculated values:', {
+//             subscriptionComplete,
+//             availabilityComplete,
+//             basicInfoComplete,
+//             profileSetupComplete,
+//             availabilityExists
+//           });
+          
+//           const newCompletion = {
+//             basicInfo: basicInfoComplete,
+//             availability: availabilityComplete,
+//             payment: subscriptionComplete,
+//             status: subscriptionComplete ? 'complete' : 
+//                     (basicInfoComplete ? 'partial' : 'incomplete')
+//           };
+          
+//           console.log('📊 Setting profile completion from checkAuth:', newCompletion);
+//           setProfileCompletion(newCompletion);
+//           localStorage.setItem('profile_completion', JSON.stringify(newCompletion));
+          
 //         } else {
 //           // Token invalid, clear everything
 //           console.warn('Token verification failed, clearing auth data');
@@ -150,7 +119,6 @@
 //     localStorage.removeItem('consultant_availability');
 //     localStorage.removeItem('subscription_complete');
 //     localStorage.removeItem('profile_completion');
-//     localStorage.removeItem('payment_verified');
 //     setUser(null);
 //     setProfileCompletion({
 //       basicInfo: false,
@@ -207,42 +175,28 @@
 //         localStorage.setItem('user_data', JSON.stringify(data.user));
 //         setUser(data.user);
         
-//         // IMPORTANT: Set profile completion from backend ONLY
-//         if (data.user.profileCompletion) {
-//           const backendCompletion = data.user.profileCompletion;
-          
-//           // Calculate status based on backend data
-//           let status = 'incomplete';
-//           if (backendCompletion.payment) {
-//             status = 'complete';
-//             // Set payment verified flag to prevent checkAuth from overwriting
-//             localStorage.setItem('payment_verified', 'true');
-//           } else if (backendCompletion.basicInfo) {
-//             status = 'partial';
-//           }
-          
-//           const newCompletion = {
-//             basicInfo: backendCompletion.basicInfo || false,
-//             availability: backendCompletion.availability || false,
-//             payment: backendCompletion.payment || false,
-//             status: status
-//           };
-          
-//           console.log('📊 Setting profile completion from backend:', newCompletion);
-//           setProfileCompletion(newCompletion);
-//           localStorage.setItem('profile_completion', JSON.stringify(newCompletion));
-          
-//           // Set individual flags for backward compatibility
-//           if (backendCompletion.basicInfo) {
-//             localStorage.setItem('consultant_basic_complete', 'true');
-//           }
-//           if (backendCompletion.availability) {
-//             localStorage.setItem('profile_setup_complete', 'availability');
-//           }
-//           if (backendCompletion.payment) {
-//             localStorage.setItem('subscription_complete', 'true');
-//             localStorage.setItem('profile_setup_complete', 'complete');
-//           }
+//         // IMPORTANT: Check if subscription is active from the response
+//         const isPaymentComplete = data.user.profileCompletion?.payment === true;
+        
+//         // Set profile completion based on what we know
+//         const newCompletion = {
+//           basicInfo: true, // If they're at this point, basic info is complete
+//           availability: true, // If subscription is active, availability must be complete
+//           payment: isPaymentComplete,
+//           status: isPaymentComplete ? 'complete' : 'partial'
+//         };
+        
+//         console.log('📊 Setting profile completion from verification:', newCompletion);
+//         setProfileCompletion(newCompletion);
+//         localStorage.setItem('profile_completion', JSON.stringify(newCompletion));
+        
+//         // Set individual flags
+//         localStorage.setItem('consultant_basic_complete', 'true');
+//         localStorage.setItem('profile_setup_complete', isPaymentComplete ? 'complete' : 'availability');
+//         localStorage.setItem('consultant_availability', 'true');
+        
+//         if (isPaymentComplete) {
+//           localStorage.setItem('subscription_complete', 'true');
 //         }
         
 //         console.log('✅ Using backend redirectTo:', data.redirectTo);
@@ -288,29 +242,14 @@
 //         newCompletion.availability = completed;
 //         if (completed) {
 //           localStorage.setItem('profile_setup_complete', 'availability');
+//           localStorage.setItem('consultant_availability', 'true');
 //         }
 //       } else if (step === 'payment') {
 //         newCompletion.payment = completed;
 //         if (completed) {
 //           localStorage.setItem('subscription_complete', 'true');
-//           localStorage.setItem('payment_verified', 'true');
+//           localStorage.setItem('profile_setup_complete', 'complete');
 //           console.log('✅ Payment completion saved to localStorage');
-          
-//           // Also update user_data in localStorage to persist payment status
-//           const storedUser = localStorage.getItem('user_data');
-//           if (storedUser) {
-//             try {
-//               const userData = JSON.parse(storedUser);
-//               userData.profileCompletion = {
-//                 ...userData.profileCompletion,
-//                 payment: true
-//               };
-//               localStorage.setItem('user_data', JSON.stringify(userData));
-//               console.log('✅ Updated user_data with payment status');
-//             } catch (e) {
-//               console.error('Error updating user_data:', e);
-//             }
-//           }
 //         }
 //       }
       
@@ -386,7 +325,6 @@
 
 
 
-
 // src/context/AuthContext.jsx
 import React, { createContext, useState, useContext, useEffect } from 'react';
 
@@ -421,6 +359,46 @@ export const AuthProvider = ({ children }) => {
       window.removeEventListener('storage', handleStorageChange);
     };
   }, []);
+
+  // NEW FUNCTION: Determine redirect path based on user role and profile completion
+  const determineRedirectPath = (user) => {
+    if (!user) return '/';
+    
+    const userRole = user?.role?.toLowerCase();
+    console.log('🔄 determineRedirectPath called for role:', userRole);
+    
+    // For consultants
+    if (userRole === 'consultant') {
+      // Check payment status from profileCompletion
+      if (profileCompletion.payment === true) {
+        console.log('✅ Consultant has completed payment -> dashboard');
+        return '/consultant/dashboard';
+      } else {
+        // Check if they have basic info and availability set
+        if (profileCompletion.basicInfo === true && profileCompletion.availability === true) {
+          console.log('📝 Consultant needs to complete payment -> redirect to payment page');
+          return '/consultant/setup/payment';
+        } else if (profileCompletion.basicInfo === true) {
+          console.log('📝 Consultant needs to set availability -> redirect to availability page');
+          return '/consultant/setup/availability';
+        } else {
+          console.log('📝 Consultant needs to complete basic info -> redirect to basic info page');
+          return '/consultant/setup/basic-info';
+        }
+      }
+    } 
+    // For clients
+    else if (userRole === 'client') {
+      return '/client/dashboard';
+    } 
+    // For admins
+    else if (userRole === 'admin') {
+      return '/admin/dashboard';
+    }
+    
+    // Default fallback
+    return '/';
+  };
 
   const checkAuth = async () => {
     const token = localStorage.getItem('auth_token');
@@ -682,6 +660,7 @@ export const AuthProvider = ({ children }) => {
     return false;
   };
 
+  // Create the context value with all functions including determineRedirectPath
   const value = {
     user,
     loading,
@@ -692,6 +671,7 @@ export const AuthProvider = ({ children }) => {
     logout,
     updateProfileCompletion,
     refreshUserData,
+    determineRedirectPath, // ADD THIS LINE
     BACKEND_URL
   };
 
