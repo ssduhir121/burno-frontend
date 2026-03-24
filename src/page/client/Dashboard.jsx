@@ -30,20 +30,20 @@
 //   LifeBuoy,
 //   Ticket,
 //   Send,
-//   Paperclip,
 //   ChevronRight,
 //   Mail,
 //   Phone,
-//   ExternalLink,
-//   TrendingUp,
-//   Link as LinkIcon
+//   Grid,
+//   List,
+//   Eye,
+//   ExternalLink
 // } from 'lucide-react';
 // import { useAuth } from '../../context/AuthContext';
 // import { useNavigate } from 'react-router-dom';
 // import ContactSupportModal from '../../components/modals/ContactSupportModal';
 // import AvailabilityCalendar from '../../components/AvailabilityCalendar';
 // import AgendaWidget from '../../components/AgendaWidget';
-
+// import ProfileCompletionBanner from '../../components/ProfileCompletionBanner';
 // // Error Boundary Component
 // class ErrorBoundary extends React.Component {
 //   constructor(props) {
@@ -79,7 +79,6 @@
 //         </div>
 //       );
 //     }
-
 //     return this.props.children;
 //   }
 // }
@@ -152,13 +151,12 @@
 // };
 
 // // Ticket Details Modal
-// const TicketDetailsModal = ({ ticket, onClose, onReply, BACKEND_URL }) => {
+// const TicketDetailsModal = ({ ticket, onClose, onReply }) => {
 //   const [replyMessage, setReplyMessage] = useState('');
 //   const [submitting, setSubmitting] = useState(false);
 
 //   const handleSubmitReply = async () => {
 //     if (!replyMessage.trim()) return;
-    
 //     setSubmitting(true);
 //     await onReply(ticket._id, replyMessage);
 //     setReplyMessage('');
@@ -198,7 +196,6 @@
 //           </div>
           
 //           <div className="p-6">
-//             {/* Ticket Header */}
 //             <div className="mb-6">
 //               <div className="flex items-center space-x-2 mb-3">
 //                 <span className={`px-3 py-1 text-sm rounded-full ${getPriorityColor(ticket.priority)}`}>
@@ -212,7 +209,6 @@
 //               <p className="text-sm text-gray-600">Created on {new Date(ticket.createdAt).toLocaleString()}</p>
 //             </div>
 
-//             {/* Original Message */}
 //             <div className="mb-6 p-4 bg-gray-50 rounded-lg">
 //               <div className="flex items-center justify-between mb-2">
 //                 <span className="font-medium text-gray-900">Your Message</span>
@@ -221,7 +217,6 @@
 //               <p className="text-gray-700 whitespace-pre-wrap">{ticket.message}</p>
 //             </div>
 
-//             {/* Replies */}
 //             {ticket.replies && ticket.replies.length > 0 && (
 //               <div className="mb-6">
 //                 <h4 className="font-medium text-gray-900 mb-4">Conversation</h4>
@@ -245,7 +240,6 @@
 //               </div>
 //             )}
 
-//             {/* Reply Form */}
 //             {ticket.status !== 'closed' && ticket.status !== 'resolved' && (
 //               <div className="border-t border-gray-200 pt-6">
 //                 <h4 className="font-medium text-gray-900 mb-3">Add Reply</h4>
@@ -285,7 +279,7 @@
 // };
 
 // const ClientDashboard = () => {
-//   const { user, logout, BACKEND_URL } = useAuth();
+//   const { user, logout, BACKEND_URL, profileCompletion } = useAuth();
 //   const navigate = useNavigate();
 //   const [sidebarOpen, setSidebarOpen] = useState(false);
 //   const [activeTab, setActiveTab] = useState('overview');
@@ -297,32 +291,36 @@
 //   const [supportTickets, setSupportTickets] = useState([]);
 //   const [supportLoading, setSupportLoading] = useState(false);
 //   const [positions, setPositions] = useState([]);
-//   const [availabilityData, setAvailabilityData] = useState({});
+//   const [calendarView, setCalendarView] = useState('full');
 //   const [dashboardData, setDashboardData] = useState({
 //     profile: null,
 //     requests: [],
 //     matches: []
 //   });
 
-//   // Form state for new request
 //   const [newRequest, setNewRequest] = useState({
-//     position_id: '',
+//     position: '',
 //     title: '',
 //     description: '',
-//     start_date: '',
-//     end_date: '',
-//     budget_type: 'daily',
-//     budget_amount: '',
+//     startDate: '',
+//     endDate: '',
+//     budgetType: 'daily',
+//     budgetAmount: '',
 //     currency: 'EUR',
-//     work_country: '',
-//     work_city: '',
-//     work_mode: 'remote'
+//     workCountry: '',
+//     workCity: '',
+//     workMode: 'remote'
 //   });
 
-//   // Handle availability change (for viewing consultant availability)
+//   // Check if profile is complete
+//   useEffect(() => {
+//     if (user && !profileCompletion?.basicInfo) {
+//       navigate('/client/profile-setup');
+//     }
+//   }, [user, profileCompletion, navigate]);
+
 //   const handleAvailabilityChange = (date, status, timeRange) => {
 //     console.log('Consultant availability viewed:', { date, status, timeRange });
-//     // This is for viewing purposes only - clients can see consultant availability
 //   };
 
 //   // Fetch dashboard data
@@ -338,7 +336,7 @@
 //         setError('');
         
 //         const token = localStorage.getItem('auth_token');
-//         const response = await fetch(`${BACKEND_URL}/api/user/dashboard/${encodeURIComponent(user.email)}`, {
+//         const response = await fetch(`${BACKEND_URL}/api/dashboard/${encodeURIComponent(user.email)}`, {
 //           headers: {
 //             'Authorization': token ? `Bearer ${token}` : '',
 //             'Content-Type': 'application/json'
@@ -354,16 +352,9 @@
 //         if (result.success && result.data) {
 //           setDashboardData({
 //             profile: result.data.profile || null,
-//             requests: Array.isArray(result.data.requests) ? result.data.requests : [],
-//             matches: Array.isArray(result.data.matches) ? result.data.matches : []
+//             requests: Array.isArray(result.data.recentRequests) ? result.data.recentRequests : [],
+//             matches: Array.isArray(result.data.recentMatches) ? result.data.recentMatches : []
 //           });
-
-//           // Load availability data if exists
-//           if (result.data.profile?.availability) {
-//             setAvailabilityData(result.data.profile.availability);
-//           }
-
-//           // Fetch support tickets after dashboard data
 //           await fetchSupportTickets();
 //         } else {
 //           setError(result.error || 'Failed to load dashboard data');
@@ -386,7 +377,7 @@
 //     try {
 //       setSupportLoading(true);
 //       const token = localStorage.getItem('auth_token');
-//       const response = await fetch(`${BACKEND_URL}/api/user/support-requests/${encodeURIComponent(user.email)}`, {
+//       const response = await fetch(`${BACKEND_URL}/api/support/user/${encodeURIComponent(user.email)}`, {
 //         headers: {
 //           'Authorization': token ? `Bearer ${token}` : '',
 //           'Content-Type': 'application/json'
@@ -407,10 +398,9 @@
 //   // Fetch ticket details
 //   const fetchTicketDetails = async (ticket) => {
 //     try {
-//       setLoading(true);
 //       const token = localStorage.getItem('auth_token');
 //       const response = await fetch(
-//         `${BACKEND_URL}/api/user/support-requests/${encodeURIComponent(user.email)}/${ticket.ticketId}`,
+//         `${BACKEND_URL}/api/support/ticket/${ticket.ticketId}?email=${encodeURIComponent(user.email)}`,
 //         {
 //           headers: {
 //             'Authorization': token ? `Bearer ${token}` : '',
@@ -428,8 +418,6 @@
 //       }
 //     } catch (err) {
 //       console.error('Error fetching ticket details:', err);
-//     } finally {
-//       setLoading(false);
 //     }
 //   };
 
@@ -448,11 +436,9 @@
       
 //       const data = await response.json();
 //       if (data.success) {
-//         // Refresh ticket details
 //         if (selectedTicket) {
 //           await fetchTicketDetails(selectedTicket);
 //         }
-//         // Refresh tickets list
 //         await fetchSupportTickets();
 //       }
 //     } catch (err) {
@@ -460,7 +446,7 @@
 //     }
 //   };
 
-//   // Fetch positions for dropdown
+//   // Fetch positions
 //   useEffect(() => {
 //     const fetchPositions = async () => {
 //       try {
@@ -473,19 +459,17 @@
 //         console.error('Error fetching positions:', err);
 //       }
 //     };
-
 //     fetchPositions();
 //   }, [BACKEND_URL]);
 
-//   // Safe data access
 //   const companyProfile = dashboardData.profile ? {
-//     name: dashboardData.profile.company_name || user?.name || 'Company Name',
+//     name: dashboardData.profile.companyName || user?.name || 'Company Name',
 //     industry: dashboardData.profile.industry || 'Technology',
-//     size: dashboardData.profile.company_size || 'Company size not set',
+//     size: dashboardData.profile.companySize || 'Company size not set',
 //     location: dashboardData.profile.location || 'Location not set',
-//     verified: dashboardData.profile.is_verified || false,
-//     contact_name: dashboardData.profile.contact_name || '',
-//     contact_title: dashboardData.profile.contact_title || '',
+//     verified: dashboardData.profile.isVerified || false,
+//     contactName: dashboardData.profile.contactName || '',
+//     contactTitle: dashboardData.profile.contactTitle || '',
 //     phone: dashboardData.profile.phone || '',
 //     website: dashboardData.profile.website || ''
 //   } : {
@@ -494,45 +478,42 @@
 //     size: 'Company size not set',
 //     location: 'Location not set',
 //     verified: false,
-//     contact_name: '',
-//     contact_title: '',
+//     contactName: '',
+//     contactTitle: '',
 //     phone: '',
 //     website: ''
 //   };
 
-//   // Format requests
 //   const activeRequests = Array.isArray(dashboardData.requests) 
 //     ? dashboardData.requests.map(request => ({
-//         id: request.id,
+//         id: request._id || request.id,
 //         title: request.title || 'Untitled Request',
-//         posted: request.created_at ? new Date(request.created_at).toLocaleDateString() : 'Recently',
+//         posted: request.createdAt ? new Date(request.createdAt).toLocaleDateString() : 'Recently',
 //         proposals: request.proposal_count || 0,
 //         shortlisted: request.shortlisted_count || 0,
-//         match_count: request.match_count || 0,
+//         matchCount: request.matchCount || 0,
 //         status: request.status || 'submitted',
-//         position: request.position_name || 'General',
-//         work_mode: request.work_mode || 'remote',
-//         location: request.work_city && request.work_country 
-//           ? `${request.work_city}, ${request.work_country}`
+//         position: request.positionName || request.position_id?.name || 'General',
+//         workMode: request.workMode || 'remote',
+//         location: request.workCity && request.workCountry 
+//           ? `${request.workCity}, ${request.workCountry}`
 //           : 'Location TBD'
 //       }))
 //     : [];
 
-//   // Format matches
 //   const matches = Array.isArray(dashboardData.matches)
 //     ? dashboardData.matches.map(match => ({
-//         id: match.id,
-//         consultant: match.consultant_name || 'Consultant',
-//         expertise: match.consultant_positions || 'General',
-//         matchScore: match.match_score || 0,
-//         status: match.admin_review_status || 'suggested',
-//         proposedRate: match.proposed_rate || 'Rate TBD',
-//         availability: match.availability || 'Check availability',
-//         location: match.consultant_location || 'Location not specified'
+//         id: match._id || match.id,
+//         consultant: match.consultantName || match.consultant_name || 'Consultant',
+//         expertise: match.consultantPositions || match.expertise || 'General',
+//         matchScore: match.matchScore || 0,
+//         status: match.adminReviewStatus || match.status || 'suggested',
+//         proposedRate: match.proposedRate || 'Rate TBD',
+//         location: match.consultantLocation || match.location || 'Location not specified',
+//         companyName: match.companyName || ''
 //       }))
 //     : [];
 
-//   // Calculate stats
 //   const stats = [
 //     { 
 //       label: 'Active Projects', 
@@ -542,13 +523,13 @@
 //     },
 //     { 
 //       label: 'Total Proposals', 
-//       value: activeRequests.reduce((sum, r) => sum + r.proposals, 0).toString(), 
+//       value: activeRequests.reduce((sum, r) => sum + (r.proposals || 0), 0).toString(), 
 //       icon: <FileText className="w-5 h-5" />,
 //       change: '0 new'
 //     },
 //     { 
 //       label: 'Interviews', 
-//       value: matches.filter(m => m.status === 'interviewing').length.toString(), 
+//       value: matches.filter(m => m.status === 'interviewing' || m.status === 'shortlisted').length.toString(), 
 //       icon: <Users className="w-5 h-5" />,
 //       change: '0 scheduled'
 //     },
@@ -576,10 +557,7 @@
 
 //   const handleInputChange = (e) => {
 //     const { name, value } = e.target;
-//     setNewRequest(prev => ({
-//       ...prev,
-//       [name]: value
-//     }));
+//     setNewRequest(prev => ({ ...prev, [name]: value }));
 //   };
 
 //   const handleSubmitRequest = async (e) => {
@@ -589,7 +567,7 @@
 
 //     try {
 //       const token = localStorage.getItem('auth_token');
-//       const response = await fetch(`${BACKEND_URL}/api/create-client-request`, {
+//       const response = await fetch(`${BACKEND_URL}/api/client/create-request`, {
 //         method: 'POST',
 //         headers: {
 //           'Authorization': token ? `Bearer ${token}` : '',
@@ -605,8 +583,17 @@
 
 //       if (result.success) {
 //         setShowNewRequestModal(false);
-//         // Refresh dashboard data
-//         window.location.reload();
+//         const dashboardResponse = await fetch(`${BACKEND_URL}/api/dashboard/${encodeURIComponent(user.email)}`, {
+//           headers: { 'Authorization': token ? `Bearer ${token}` : '' }
+//         });
+//         const dashboardResult = await dashboardResponse.json();
+//         if (dashboardResult.success && dashboardResult.data) {
+//           setDashboardData({
+//             profile: dashboardResult.data.profile || null,
+//             requests: Array.isArray(dashboardResult.data.recentRequests) ? dashboardResult.data.recentRequests : [],
+//             matches: Array.isArray(dashboardResult.data.recentMatches) ? dashboardResult.data.recentMatches : []
+//           });
+//         }
 //       } else {
 //         setError(result.error || 'Failed to create request');
 //       }
@@ -616,16 +603,6 @@
 //     } finally {
 //       setLoading(false);
 //     }
-//   };
-
-//   const handleViewRequest = (requestId) => {
-//     // Navigate to request details
-//     console.log('View request:', requestId);
-//   };
-
-//   const handleContactConsultant = (matchId) => {
-//     // Navigate to messaging
-//     console.log('Contact consultant:', matchId);
 //   };
 
 //   if (loading) {
@@ -639,7 +616,7 @@
 //     );
 //   }
 
-//   if (error) {
+//   if (error && !dashboardData.profile) {
 //     return (
 //       <div className="min-h-screen flex items-center justify-center bg-gray-50">
 //         <div className="text-center max-w-md p-8">
@@ -662,23 +639,19 @@
 //   return (
 //     <ErrorBoundary>
 //       <div className="min-h-screen bg-gray-50">
-//         {/* Contact Support Modal */}
 //         <ContactSupportModal 
 //           isOpen={isSupportModalOpen}
 //           onClose={() => setIsSupportModalOpen(false)}
 //         />
 
-//         {/* Ticket Details Modal */}
 //         {selectedTicket && (
 //           <TicketDetailsModal
 //             ticket={selectedTicket}
 //             onClose={() => setSelectedTicket(null)}
 //             onReply={handleSubmitReply}
-//             BACKEND_URL={BACKEND_URL}
 //           />
 //         )}
 
-//         {/* Mobile Sidebar Overlay */}
 //         {sidebarOpen && (
 //           <div 
 //             className="fixed inset-0 bg-gray-600 bg-opacity-50 z-20 lg:hidden"
@@ -692,7 +665,7 @@
 //             <div className="px-4 py-6 border-b border-gray-700">
 //               <div className="flex items-center space-x-3">
 //                 <div className="rounded-lg">
-//                   <img src="/logo.png" alt="Logo" className="h-20 object-contain" />
+//                   <img src="/logo.png" alt="Logo" className="h-12 object-contain" />
 //                 </div>
 //                 <div>
 //                   <h2 className="font-bold text-lg">Client Panel</h2>
@@ -716,10 +689,10 @@
 //             <nav className="flex-1 px-2 py-4 space-y-1">
 //               {[
 //                 { id: 'overview', label: 'Overview', icon: <Target className="w-5 h-5" /> },
+//                 { id: 'calendar', label: 'Calendar & Agenda', icon: <Calendar className="w-5 h-5" /> },
 //                 { id: 'requests', label: 'My Requests', icon: <FileText className="w-5 h-5" /> },
 //                 { id: 'matches', label: 'Matches', icon: <UserCheck className="w-5 h-5" /> },
 //                 { id: 'consultants', label: 'Consultants', icon: <Users className="w-5 h-5" /> },
-//                 { id: 'messages', label: 'Messages', icon: <MessageSquare className="w-5 h-5" /> },
 //                 { id: 'support', label: 'Support', icon: <LifeBuoy className="w-5 h-5" /> },
 //                 { id: 'profile', label: 'Company Profile', icon: <Building className="w-5 h-5" /> },
 //                 { id: 'settings', label: 'Settings', icon: <Settings className="w-5 h-5" /> }
@@ -754,23 +727,15 @@
 //           <nav className="bg-white shadow-sm sticky top-0 z-10">
 //             <div className="px-4 sm:px-6 lg:px-8">
 //               <div className="flex justify-between items-center h-16">
-//                 <button
-//                   onClick={() => setSidebarOpen(true)}
-//                   className="lg:hidden text-gray-500 hover:text-gray-700"
-//                 >
+//                 <button onClick={() => setSidebarOpen(true)} className="lg:hidden text-gray-500 hover:text-gray-700">
 //                   <Menu className="w-6 h-6" />
 //                 </button>
-
 //                 <div className="flex-1 flex justify-end items-center space-x-4">
 //                   <button className="relative p-2 text-gray-400 hover:text-gray-600">
 //                     <Bell className="w-6 h-6" />
 //                     <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
 //                   </button>
-//                   <button
-//                     onClick={() => setIsSupportModalOpen(true)}
-//                     className="p-2 text-gray-400 hover:text-gray-600 relative group"
-//                     title="Contact Support"
-//                   >
+//                   <button onClick={() => setIsSupportModalOpen(true)} className="p-2 text-gray-400 hover:text-gray-600" title="Contact Support">
 //                     <HelpCircle className="w-6 h-6" />
 //                   </button>
 //                   <div className="flex items-center space-x-3">
@@ -785,6 +750,8 @@
 //           </nav>
 
 //           <main className="p-4 sm:p-6 lg:p-8">
+//             <ProfileCompletionBanner profileCompletion={profileCompletion} />
+//             {/* Overview Tab */}
 //             {activeTab === 'overview' && (
 //               <>
 //                 <div className="flex justify-between items-center mb-8">
@@ -792,23 +759,17 @@
 //                     <h1 className="text-2xl font-bold text-gray-900">Welcome back, {companyProfile.name}</h1>
 //                     <p className="text-gray-600">Find the perfect consultant for your projects.</p>
 //                   </div>
-//                   <button
-//                     onClick={() => setShowNewRequestModal(true)}
-//                     className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 flex items-center"
-//                   >
+//                   <button onClick={() => setShowNewRequestModal(true)} className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 flex items-center">
 //                     <Plus className="w-5 h-5 mr-2" />
 //                     New Request
 //                   </button>
 //                 </div>
 
-//                 {/* Stats Grid */}
 //                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
 //                   {stats.map((stat, index) => (
 //                     <div key={index} className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
 //                       <div className="flex items-center justify-between mb-4">
-//                         <div className="bg-blue-100 p-3 rounded-lg text-blue-600">
-//                           {stat.icon}
-//                         </div>
+//                         <div className="bg-blue-100 p-3 rounded-lg text-blue-600">{stat.icon}</div>
 //                         <span className="text-sm text-green-600">{stat.change}</span>
 //                       </div>
 //                       <h3 className="text-2xl font-bold text-gray-900">{stat.value}</h3>
@@ -817,46 +778,41 @@
 //                   ))}
 //                 </div>
 
-//                 {/* Calendar and Agenda Widgets */}
-//                 <div className="grid lg:grid-cols-2 gap-6 mb-8">
-//                   {/* Consultant Availability Calendar - View Only */}
-//                   <AvailabilityCalendar
-//                     userId={user?.email}
-//                     userType="client"
-//                     BACKEND_URL={BACKEND_URL}
-//                     readOnly={true}
-//                     onAvailabilityChange={handleAvailabilityChange}
-//                   />
-                  
-//                   {/* Agenda Widget - Shows upcoming engagements */}
-//                   <AgendaWidget
-//                     userId={user?.email}
-//                     userType="client"
-//                     BACKEND_URL={BACKEND_URL}
-//                   />
+//                 <div className="mb-8 bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+//                   <div className="flex justify-between items-center mb-4">
+//                     <h2 className="text-lg font-semibold text-gray-900">Consultant Schedule Preview</h2>
+//                     <button onClick={() => setActiveTab('calendar')} className="text-sm text-blue-600 hover:text-blue-700 font-medium">
+//                       View Full Calendar →
+//                     </button>
+//                   </div>
+//                   <div className="grid lg:grid-cols-2 gap-6">
+//                     <AvailabilityCalendar
+//                       userId="all"
+//                       userType="client"
+//                       BACKEND_URL={BACKEND_URL}
+//                       readOnly={true}
+//                       onAvailabilityChange={handleAvailabilityChange}
+//                       compact={true}
+//                     />
+//                     <AgendaWidget
+//                       userId={user?.email}
+//                       userType="client"
+//                       BACKEND_URL={BACKEND_URL}
+//                       compact={true}
+//                     />
+//                   </div>
 //                 </div>
 
-//                 {/* Two Column Layout */}
 //                 <div className="grid lg:grid-cols-2 gap-6">
-//                   {/* Active Requests */}
 //                   <div className="bg-white rounded-xl shadow-sm border border-gray-200">
 //                     <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
 //                       <h2 className="text-lg font-semibold text-gray-900">Active Requests</h2>
-//                       <button 
-//                         onClick={() => setActiveTab('requests')}
-//                         className="text-sm text-blue-600 hover:text-blue-700"
-//                       >
-//                         View All
-//                       </button>
+//                       <button onClick={() => setActiveTab('requests')} className="text-sm text-blue-600 hover:text-blue-700">View All</button>
 //                     </div>
 //                     <div className="p-6">
 //                       {activeRequests.length > 0 ? (
 //                         activeRequests.slice(0, 3).map((request) => (
-//                           <div 
-//                             key={request.id} 
-//                             className="mb-4 last:mb-0 p-4 bg-gray-50 rounded-lg hover:shadow-md transition cursor-pointer"
-//                             onClick={() => handleViewRequest(request.id)}
-//                           >
+//                           <div key={request.id} className="mb-4 last:mb-0 p-4 bg-gray-50 rounded-lg hover:shadow-md transition cursor-pointer">
 //                             <div className="flex justify-between items-start mb-2">
 //                               <h3 className="font-medium text-gray-900">{request.title}</h3>
 //                               <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(request.status)}`}>
@@ -866,20 +822,12 @@
 //                             <p className="text-sm text-gray-600 mb-2">{request.position}</p>
 //                             <div className="flex items-center justify-between text-sm">
 //                               <div className="flex items-center space-x-4 text-gray-500">
-//                                 <span className="flex items-center">
-//                                   <MapPin className="w-4 h-4 mr-1" />
-//                                   {request.location}
-//                                 </span>
-//                                 <span className="flex items-center">
-//                                   <Clock className="w-4 h-4 mr-1" />
-//                                   {request.work_mode}
-//                                 </span>
+//                                 <span className="flex items-center"><MapPin className="w-4 h-4 mr-1" />{request.location}</span>
+//                                 <span className="flex items-center"><Clock className="w-4 h-4 mr-1" />{request.workMode}</span>
 //                               </div>
 //                               <div className="flex items-center space-x-4">
-//                                 <span className="text-gray-600">{request.match_count} matches</span>
-//                                 <button className="text-blue-600 hover:text-blue-700 font-medium text-sm">
-//                                   View →
-//                                 </button>
+//                                 <span className="text-gray-600">{request.matchCount} matches</span>
+//                                 <button className="text-blue-600 hover:text-blue-700 font-medium text-sm">View →</button>
 //                               </div>
 //                             </div>
 //                           </div>
@@ -890,10 +838,7 @@
 //                             <FileText className="w-8 h-8 text-gray-400" />
 //                           </div>
 //                           <p className="text-gray-500 mb-2">No active requests</p>
-//                           <button
-//                             onClick={() => setShowNewRequestModal(true)}
-//                             className="text-blue-600 hover:text-blue-700 text-sm font-medium"
-//                           >
+//                           <button onClick={() => setShowNewRequestModal(true)} className="text-blue-600 hover:text-blue-700 text-sm font-medium">
 //                             Create your first request →
 //                           </button>
 //                         </div>
@@ -901,44 +846,26 @@
 //                     </div>
 //                   </div>
 
-//                   {/* Support Tickets Preview */}
 //                   <div className="bg-white rounded-xl shadow-sm border border-gray-200">
 //                     <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
 //                       <h2 className="text-lg font-semibold text-gray-900">Support Tickets</h2>
-//                       <button 
-//                         onClick={() => setActiveTab('support')}
-//                         className="text-sm text-blue-600 hover:text-blue-700"
-//                       >
-//                         View All
-//                       </button>
+//                       <button onClick={() => setActiveTab('support')} className="text-sm text-blue-600 hover:text-blue-700">View All</button>
 //                     </div>
 //                     <div className="p-6">
 //                       {supportLoading ? (
-//                         <div className="flex justify-center py-8">
-//                           <Loader className="w-6 h-6 animate-spin text-blue-600" />
-//                         </div>
+//                         <div className="flex justify-center py-8"><Loader className="w-6 h-6 animate-spin text-blue-600" /></div>
 //                       ) : supportTickets.length > 0 ? (
 //                         <div className="space-y-3">
 //                           {supportTickets.slice(0, 2).map((ticket) => (
-//                             <div
-//                               key={ticket._id}
-//                               onClick={() => fetchTicketDetails(ticket)}
-//                               className="p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer transition"
-//                             >
+//                             <div key={ticket._id} onClick={() => fetchTicketDetails(ticket)} className="p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer transition">
 //                               <div className="flex items-center justify-between mb-1">
 //                                 <span className="text-xs font-mono text-blue-600">{ticket.ticketId}</span>
-//                                 <span className={`px-2 py-0.5 text-xs rounded-full ${
-//                                   ticket.status === 'new' ? 'bg-yellow-100 text-yellow-800' :
-//                                   ticket.status === 'in_progress' ? 'bg-blue-100 text-blue-800' :
-//                                   'bg-green-100 text-green-800'
-//                                 }`}>
+//                                 <span className={`px-2 py-0.5 text-xs rounded-full ${ticket.status === 'new' ? 'bg-yellow-100 text-yellow-800' : ticket.status === 'in_progress' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}`}>
 //                                   {ticket.status}
 //                                 </span>
 //                               </div>
 //                               <p className="text-sm font-medium text-gray-900 truncate">{ticket.subject}</p>
-//                               <p className="text-xs text-gray-500 mt-1">
-//                                 {new Date(ticket.createdAt).toLocaleDateString()}
-//                               </p>
+//                               <p className="text-xs text-gray-500 mt-1">{new Date(ticket.createdAt).toLocaleDateString()}</p>
 //                             </div>
 //                           ))}
 //                         </div>
@@ -948,10 +875,7 @@
 //                             <Ticket className="w-6 h-6 text-gray-400" />
 //                           </div>
 //                           <p className="text-gray-500 text-sm mb-2">No support tickets</p>
-//                           <button
-//                             onClick={() => setIsSupportModalOpen(true)}
-//                             className="text-sm text-blue-600 hover:text-blue-700 font-medium"
-//                           >
+//                           <button onClick={() => setIsSupportModalOpen(true)} className="text-sm text-blue-600 hover:text-blue-700 font-medium">
 //                             Contact Support →
 //                           </button>
 //                         </div>
@@ -960,17 +884,11 @@
 //                   </div>
 //                 </div>
 
-//                 {/* Top Matches Section */}
 //                 {matches.length > 0 && (
 //                   <div className="mt-6 bg-white rounded-xl shadow-sm border border-gray-200">
 //                     <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
 //                       <h2 className="text-lg font-semibold text-gray-900">Top Consultant Matches</h2>
-//                       <button 
-//                         onClick={() => setActiveTab('matches')}
-//                         className="text-sm text-blue-600 hover:text-blue-700"
-//                       >
-//                         View All Matches
-//                       </button>
+//                       <button onClick={() => setActiveTab('matches')} className="text-sm text-blue-600 hover:text-blue-700">View All Matches</button>
 //                     </div>
 //                     <div className="p-6">
 //                       <div className="grid md:grid-cols-2 gap-4">
@@ -991,12 +909,7 @@
 //                                 <MapPin className="w-4 h-4" />
 //                                 <span>{match.location}</span>
 //                               </div>
-//                               <button 
-//                                 onClick={() => handleContactConsultant(match.id)}
-//                                 className="text-blue-600 hover:text-blue-700 font-medium text-sm"
-//                               >
-//                                 Contact →
-//                               </button>
+//                               <button className="text-blue-600 hover:text-blue-700 font-medium text-sm">Contact →</button>
 //                             </div>
 //                           </div>
 //                         ))}
@@ -1007,20 +920,108 @@
 //               </>
 //             )}
 
+//             {/* Calendar Tab */}
+//             {activeTab === 'calendar' && (
+//               <div className="space-y-6">
+//                 <div className="flex justify-between items-center">
+//                   <div>
+//                     <h1 className="text-2xl font-bold text-gray-900">Consultant Availability & Agenda</h1>
+//                     <p className="text-gray-600 mt-1">View consultant availability and track your upcoming engagements</p>
+//                   </div>
+//                   <div className="flex items-center space-x-2">
+//                     <button onClick={() => setCalendarView('full')} className={`p-2 rounded-lg transition ${calendarView === 'full' ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+//                       <Grid className="w-5 h-5" />
+//                     </button>
+//                     <button onClick={() => setCalendarView('compact')} className={`p-2 rounded-lg transition ${calendarView === 'compact' ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+//                       <List className="w-5 h-5" />
+//                     </button>
+//                   </div>
+//                 </div>
+
+//                 <div className={`grid ${calendarView === 'full' ? 'lg:grid-cols-3' : 'lg:grid-cols-2'} gap-6`}>
+//                   <div className={calendarView === 'full' ? 'lg:col-span-2' : 'lg:col-span-1'}>
+//                     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+//                       <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+//                         <Calendar className="w-5 h-5 mr-2 text-blue-600" />
+//                         Consultant Availability Calendar
+//                       </h2>
+//                       <p className="text-sm text-gray-500 mb-4">View when consultants are available for new projects. Green dates show available consultants.</p>
+//                       <AvailabilityCalendar
+//                         userId="all"
+//                         userType="client"
+//                         BACKEND_URL={BACKEND_URL}
+//                         readOnly={true}
+//                         onAvailabilityChange={handleAvailabilityChange}
+//                         compact={calendarView === 'compact'}
+//                       />
+//                     </div>
+//                   </div>
+
+//                   <div className={calendarView === 'full' ? 'lg:col-span-1' : 'lg:col-span-1'}>
+//                     <AgendaWidget
+//                       userId={user?.email}
+//                       userType="client"
+//                       BACKEND_URL={BACKEND_URL}
+//                       compact={calendarView === 'compact'}
+//                     />
+//                   </div>
+//                 </div>
+
+//                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+//                   <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+//                     <MessageSquare className="w-5 h-5 mr-2 text-green-600" />
+//                     Upcoming Interviews
+//                   </h2>
+//                   {matches.filter(m => m.status === 'shortlisted' || m.status === 'interviewing').length > 0 ? (
+//                     <div className="space-y-3">
+//                       {matches.filter(m => m.status === 'shortlisted' || m.status === 'interviewing').map((match) => (
+//                         <div key={match.id} className="flex items-center justify-between p-4 bg-green-50 rounded-lg border border-green-200">
+//                           <div>
+//                             <p className="font-medium text-gray-900">{match.consultant}</p>
+//                             <p className="text-sm text-gray-600">{match.expertise}</p>
+//                           </div>
+//                           <div className="text-right">
+//                             <span className="inline-block px-2 py-1 text-xs rounded-full bg-green-100 text-green-800 mb-1">
+//                               {match.status === 'shortlisted' ? 'Shortlisted' : 'Interview Scheduled'}
+//                             </span>
+//                             <button className="block text-sm text-blue-600 hover:text-blue-700 mt-1">Schedule Interview →</button>
+//                           </div>
+//                         </div>
+//                       ))}
+//                     </div>
+//                   ) : (
+//                     <div className="text-center py-8 text-gray-500">
+//                       <p>No upcoming interviews</p>
+//                       <p className="text-sm mt-1">When consultants are shortlisted, interviews will appear here</p>
+//                     </div>
+//                   )}
+//                 </div>
+
+//                 <div className="bg-blue-50 rounded-xl border border-blue-200 p-6">
+//                   <h3 className="font-semibold text-blue-900 mb-2 flex items-center">
+//                     <HelpCircle className="w-5 h-5 mr-2" />
+//                     Consultant Availability Tips
+//                   </h3>
+//                   <ul className="text-sm text-blue-800 space-y-1">
+//                     <li>• Green dates show when consultants are available for new projects</li>
+//                     <li>• Click on any date to see which consultants are available that day</li>
+//                     <li>• Create a request to get matched with available consultants</li>
+//                     <li>• Once matched, you'll be able to schedule interviews directly</li>
+//                   </ul>
+//                 </div>
+//               </div>
+//             )}
+
 //             {/* Requests Tab */}
 //             {activeTab === 'requests' && (
 //               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
 //                 <div className="flex justify-between items-center mb-6">
 //                   <h2 className="text-xl font-bold text-gray-900">My Project Requests</h2>
-//                   <button
-//                     onClick={() => setShowNewRequestModal(true)}
-//                     className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center text-sm"
-//                   >
+//                   <button onClick={() => setShowNewRequestModal(true)} className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center text-sm">
 //                     <Plus className="w-4 h-4 mr-2" />
 //                     New Request
 //                   </button>
 //                 </div>
-                
 //                 {activeRequests.length > 0 ? (
 //                   <div className="space-y-4">
 //                     {activeRequests.map((request) => (
@@ -1036,20 +1037,12 @@
 //                         </div>
 //                         <div className="flex items-center justify-between text-sm">
 //                           <div className="flex items-center space-x-4 text-gray-500">
-//                             <span className="flex items-center">
-//                               <MapPin className="w-4 h-4 mr-1" />
-//                               {request.location}
-//                             </span>
-//                             <span className="flex items-center">
-//                               <Clock className="w-4 h-4 mr-1" />
-//                               {request.work_mode}
-//                             </span>
+//                             <span className="flex items-center"><MapPin className="w-4 h-4 mr-1" />{request.location}</span>
+//                             <span className="flex items-center"><Clock className="w-4 h-4 mr-1" />{request.workMode}</span>
 //                           </div>
 //                           <div className="flex items-center space-x-4">
-//                             <span className="text-gray-600">{request.match_count} matches</span>
-//                             <button className="text-blue-600 hover:text-blue-700 font-medium">
-//                               View Details →
-//                             </button>
+//                             <span className="text-gray-600">{request.matchCount} matches</span>
+//                             <button className="text-blue-600 hover:text-blue-700 font-medium">View Details →</button>
 //                           </div>
 //                         </div>
 //                       </div>
@@ -1062,10 +1055,7 @@
 //                     </div>
 //                     <h3 className="text-lg font-medium text-gray-900 mb-2">No requests yet</h3>
 //                     <p className="text-gray-500 mb-6">Create your first project request to find consultants</p>
-//                     <button
-//                       onClick={() => setShowNewRequestModal(true)}
-//                       className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700"
-//                     >
+//                     <button onClick={() => setShowNewRequestModal(true)} className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700">
 //                       Create New Request
 //                     </button>
 //                   </div>
@@ -1077,7 +1067,6 @@
 //             {activeTab === 'matches' && (
 //               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
 //                 <h2 className="text-xl font-bold text-gray-900 mb-6">Consultant Matches</h2>
-                
 //                 {matches.length > 0 ? (
 //                   <div className="space-y-4">
 //                     {matches.map((match) => (
@@ -1098,22 +1087,11 @@
 //                           </span>
 //                         </div>
 //                         <div className="grid grid-cols-2 gap-4 mb-3 text-sm">
-//                           <div className="flex items-center text-gray-500">
-//                             <MapPin className="w-4 h-4 mr-1" />
-//                             {match.location}
-//                           </div>
-//                           <div className="flex items-center text-gray-500">
-//                             <DollarSign className="w-4 h-4 mr-1" />
-//                             {match.proposedRate}
-//                           </div>
+//                           <div className="flex items-center text-gray-500"><MapPin className="w-4 h-4 mr-1" />{match.location}</div>
+//                           <div className="flex items-center text-gray-500"><DollarSign className="w-4 h-4 mr-1" />{match.proposedRate}</div>
 //                         </div>
 //                         <div className="flex justify-end">
-//                           <button 
-//                             onClick={() => handleContactConsultant(match.id)}
-//                             className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 text-sm"
-//                           >
-//                             Contact Consultant
-//                           </button>
+//                           <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 text-sm">Contact Consultant</button>
 //                         </div>
 //                       </div>
 //                     ))}
@@ -1125,10 +1103,7 @@
 //                     </div>
 //                     <h3 className="text-lg font-medium text-gray-900 mb-2">No matches yet</h3>
 //                     <p className="text-gray-500 mb-6">Create a project request to get matched with consultants</p>
-//                     <button
-//                       onClick={() => setShowNewRequestModal(true)}
-//                       className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700"
-//                     >
+//                     <button onClick={() => setShowNewRequestModal(true)} className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700">
 //                       Create Request
 //                     </button>
 //                   </div>
@@ -1136,56 +1111,31 @@
 //               </div>
 //             )}
 
-//             {/* Consultants Tab - Browse Available Consultants */}
+//             {/* Consultants Tab */}
 //             {activeTab === 'consultants' && (
-//               <div className="space-y-6">
-//                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-//                   <div className="flex justify-between items-center mb-6">
-//                     <div>
-//                       <h2 className="text-xl font-bold text-gray-900">Browse Consultants</h2>
-//                       <p className="text-gray-600 mt-1">Find and connect with top consultants</p>
-//                     </div>
-//                     <div className="flex items-center space-x-2">
-//                       <div className="relative">
-//                         <Search className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-//                         <input
-//                           type="text"
-//                           placeholder="Search consultants..."
-//                           className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-//                         />
-//                       </div>
-//                       <button className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50">
-//                         <Filter className="w-5 h-5 text-gray-500" />
-//                       </button>
-//                     </div>
+//               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+//                 <div className="flex justify-between items-center mb-6">
+//                   <div>
+//                     <h2 className="text-xl font-bold text-gray-900">Browse Consultants</h2>
+//                     <p className="text-gray-600 mt-1">Find and connect with top consultants</p>
 //                   </div>
-
-//                   <div className="text-center py-12">
-//                     <div className="bg-gray-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
-//                       <Users className="w-10 h-10 text-gray-400" />
+//                   <div className="flex items-center space-x-2">
+//                     <div className="relative">
+//                       <Search className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+//                       <input type="text" placeholder="Search consultants..." className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
 //                     </div>
-//                     <h3 className="text-lg font-medium text-gray-900 mb-2">Consultant Directory Coming Soon</h3>
-//                     <p className="text-gray-500">Create a project request and we'll find the best matches for you</p>
-//                     <button
-//                       onClick={() => setShowNewRequestModal(true)}
-//                       className="mt-4 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
-//                     >
-//                       Create Request
-//                     </button>
+//                     <button className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50"><Filter className="w-5 h-5 text-gray-500" /></button>
 //                   </div>
 //                 </div>
-
-//                 {/* Consultant Availability Calendar Preview */}
-//                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-//                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Consultant Availability Overview</h3>
-//                   <p className="text-sm text-gray-500 mb-4">View when consultants are available for new projects</p>
-//                   <AvailabilityCalendar
-//                     userId="all" // This would show aggregated availability
-//                     userType="client"
-//                     BACKEND_URL={BACKEND_URL}
-//                     readOnly={true}
-//                     compact={true}
-//                   />
+//                 <div className="text-center py-12">
+//                   <div className="bg-gray-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+//                     <Users className="w-10 h-10 text-gray-400" />
+//                   </div>
+//                   <h3 className="text-lg font-medium text-gray-900 mb-2">Consultant Directory Coming Soon</h3>
+//                   <p className="text-gray-500">Create a project request and we'll find the best matches for you</p>
+//                   <button onClick={() => setShowNewRequestModal(true)} className="mt-4 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
+//                     Create Request
+//                   </button>
 //                 </div>
 //               </div>
 //             )}
@@ -1193,69 +1143,48 @@
 //             {/* Support Tab */}
 //             {activeTab === 'support' && (
 //               <div className="space-y-6">
-//                 {/* Support Header */}
 //                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
 //                   <div className="flex items-center justify-between">
 //                     <div>
 //                       <h2 className="text-2xl font-bold text-gray-900">Support Center</h2>
 //                       <p className="text-gray-600 mt-1">Get help with your projects, account, or technical issues</p>
 //                     </div>
-//                     <button
-//                       onClick={() => setIsSupportModalOpen(true)}
-//                       className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition font-medium flex items-center"
-//                     >
+//                     <button onClick={() => setIsSupportModalOpen(true)} className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition font-medium flex items-center">
 //                       <HelpCircle className="w-5 h-5 mr-2" />
 //                       Contact Support
 //                     </button>
 //                   </div>
 //                 </div>
 
-//                 {/* Quick Support Options */}
 //                 <div className="grid md:grid-cols-3 gap-4">
 //                   <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center hover:shadow-md transition">
-//                     <div className="bg-blue-100 w-12 h-12 rounded-lg flex items-center justify-center mx-auto mb-4">
-//                       <Mail className="w-6 h-6 text-blue-600" />
-//                     </div>
+//                     <div className="bg-blue-100 w-12 h-12 rounded-lg flex items-center justify-center mx-auto mb-4"><Mail className="w-6 h-6 text-blue-600" /></div>
 //                     <h3 className="font-semibold text-gray-900 mb-2">Email Support</h3>
 //                     <p className="text-sm text-gray-600 mb-3">support@webconsultanthub.com</p>
 //                     <p className="text-xs text-gray-500">Reply within 24 hours</p>
 //                   </div>
-
 //                   <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center hover:shadow-md transition">
-//                     <div className="bg-green-100 w-12 h-12 rounded-lg flex items-center justify-center mx-auto mb-4">
-//                       <MessageSquare className="w-6 h-6 text-green-600" />
-//                     </div>
+//                     <div className="bg-green-100 w-12 h-12 rounded-lg flex items-center justify-center mx-auto mb-4"><MessageSquare className="w-6 h-6 text-green-600" /></div>
 //                     <h3 className="font-semibold text-gray-900 mb-2">Live Chat</h3>
 //                     <p className="text-sm text-gray-600 mb-3">Chat with support team</p>
 //                     <p className="text-xs text-gray-500">Available 24/7</p>
 //                   </div>
-
 //                   <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center hover:shadow-md transition">
-//                     <div className="bg-purple-100 w-12 h-12 rounded-lg flex items-center justify-center mx-auto mb-4">
-//                       <FileText className="w-6 h-6 text-purple-600" />
-//                     </div>
+//                     <div className="bg-purple-100 w-12 h-12 rounded-lg flex items-center justify-center mx-auto mb-4"><FileText className="w-6 h-6 text-purple-600" /></div>
 //                     <h3 className="font-semibold text-gray-900 mb-2">Help Center</h3>
 //                     <p className="text-sm text-gray-600 mb-3">Browse knowledge base</p>
 //                     <p className="text-xs text-gray-500">Self-service resources</p>
 //                   </div>
 //                 </div>
 
-//                 {/* Support Tickets */}
 //                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
 //                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Your Support Tickets</h3>
-                  
 //                   {supportLoading ? (
-//                     <div className="flex justify-center py-8">
-//                       <Loader className="w-8 h-8 animate-spin text-blue-600" />
-//                     </div>
+//                     <div className="flex justify-center py-8"><Loader className="w-8 h-8 animate-spin text-blue-600" /></div>
 //                   ) : supportTickets.length > 0 ? (
 //                     <div className="space-y-4">
 //                       {supportTickets.map((ticket) => (
-//                         <SupportTicket
-//                           key={ticket._id}
-//                           ticket={ticket}
-//                           onViewDetails={fetchTicketDetails}
-//                         />
+//                         <SupportTicket key={ticket._id} ticket={ticket} onViewDetails={fetchTicketDetails} />
 //                       ))}
 //                     </div>
 //                   ) : (
@@ -1265,17 +1194,13 @@
 //                       </div>
 //                       <h3 className="text-lg font-medium text-gray-900 mb-2">No support tickets</h3>
 //                       <p className="text-gray-500 mb-4">You haven't created any support tickets yet</p>
-//                       <button
-//                         onClick={() => setIsSupportModalOpen(true)}
-//                         className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition font-medium"
-//                       >
+//                       <button onClick={() => setIsSupportModalOpen(true)} className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition font-medium">
 //                         Create Support Ticket
 //                       </button>
 //                     </div>
 //                   )}
 //                 </div>
 
-//                 {/* FAQ Section */}
 //                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
 //                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Frequently Asked Questions</h3>
 //                   <div className="space-y-4">
@@ -1305,73 +1230,28 @@
 //               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
 //                 <div className="flex justify-between items-center mb-6">
 //                   <h2 className="text-xl font-bold text-gray-900">Company Profile</h2>
-//                   <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 text-sm">
-//                     Edit Profile
-//                   </button>
+//                   <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 text-sm">Edit Profile</button>
 //                 </div>
-                
 //                 <div className="grid md:grid-cols-2 gap-8">
 //                   <div>
 //                     <h3 className="font-medium text-gray-900 mb-4 pb-2 border-b">Company Information</h3>
 //                     <div className="space-y-4">
-//                       <div>
-//                         <label className="text-sm text-gray-500">Company Name</label>
-//                         <p className="font-medium text-gray-900">{companyProfile.name}</p>
-//                       </div>
-//                       <div>
-//                         <label className="text-sm text-gray-500">Industry</label>
-//                         <p className="font-medium text-gray-900">{companyProfile.industry}</p>
-//                       </div>
-//                       <div>
-//                         <label className="text-sm text-gray-500">Company Size</label>
-//                         <p className="font-medium text-gray-900">{companyProfile.size}</p>
-//                       </div>
-//                       <div>
-//                         <label className="text-sm text-gray-500">Location</label>
-//                         <p className="font-medium text-gray-900 flex items-center">
-//                           <MapPin className="w-4 h-4 mr-1 text-gray-400" />
-//                           {companyProfile.location}
-//                         </p>
-//                       </div>
-//                       {companyProfile.website && (
-//                         <div>
-//                           <label className="text-sm text-gray-500">Website</label>
-//                           <p className="font-medium text-gray-900">
-//                             <a href={companyProfile.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-//                               {companyProfile.website}
-//                             </a>
-//                           </p>
-//                         </div>
-//                       )}
+//                       <div><label className="text-sm text-gray-500">Company Name</label><p className="font-medium text-gray-900">{companyProfile.name}</p></div>
+//                       <div><label className="text-sm text-gray-500">Industry</label><p className="font-medium text-gray-900">{companyProfile.industry}</p></div>
+//                       <div><label className="text-sm text-gray-500">Company Size</label><p className="font-medium text-gray-900">{companyProfile.size}</p></div>
+//                       <div><label className="text-sm text-gray-500">Location</label><p className="font-medium text-gray-900 flex items-center"><MapPin className="w-4 h-4 mr-1 text-gray-400" />{companyProfile.location}</p></div>
+//                       {companyProfile.website && (<div><label className="text-sm text-gray-500">Website</label><p className="font-medium text-gray-900"><a href={companyProfile.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">{companyProfile.website}</a></p></div>)}
 //                     </div>
 //                   </div>
-
 //                   <div>
 //                     <h3 className="font-medium text-gray-900 mb-4 pb-2 border-b">Contact Information</h3>
 //                     <div className="space-y-4">
-//                       <div>
-//                         <label className="text-sm text-gray-500">Contact Name</label>
-//                         <p className="font-medium text-gray-900">{companyProfile.contact_name || 'Not provided'}</p>
-//                       </div>
-//                       <div>
-//                         <label className="text-sm text-gray-500">Contact Title</label>
-//                         <p className="font-medium text-gray-900">{companyProfile.contact_title || 'Not provided'}</p>
-//                       </div>
-//                       <div>
-//                         <label className="text-sm text-gray-500">Phone</label>
-//                         <p className="font-medium text-gray-900">{companyProfile.phone || 'Not provided'}</p>
-//                       </div>
-//                       <div>
-//                         <label className="text-sm text-gray-500">Email</label>
-//                         <p className="font-medium text-gray-900">{user?.email}</p>
-//                       </div>
+//                       <div><label className="text-sm text-gray-500">Contact Name</label><p className="font-medium text-gray-900">{companyProfile.contactName || 'Not provided'}</p></div>
+//                       <div><label className="text-sm text-gray-500">Contact Title</label><p className="font-medium text-gray-900">{companyProfile.contactTitle || 'Not provided'}</p></div>
+//                       <div><label className="text-sm text-gray-500">Phone</label><p className="font-medium text-gray-900">{companyProfile.phone || 'Not provided'}</p></div>
+//                       <div><label className="text-sm text-gray-500">Email</label><p className="font-medium text-gray-900">{user?.email}</p></div>
 //                     </div>
-//                     {companyProfile.verified && (
-//                       <div className="mt-6 flex items-center">
-//                         <CheckCircle className="w-5 h-5 text-green-500 mr-2" />
-//                         <span className="text-sm text-green-700">Verified Company</span>
-//                       </div>
-//                     )}
+//                     {companyProfile.verified && (<div className="mt-6 flex items-center"><CheckCircle className="w-5 h-5 text-green-500 mr-2" /><span className="text-sm text-green-700">Verified Company</span></div>)}
 //                   </div>
 //                 </div>
 //               </div>
@@ -1385,39 +1265,20 @@
 //                   <div>
 //                     <h3 className="text-lg font-medium text-gray-900 mb-4">Notification Preferences</h3>
 //                     <div className="space-y-3">
-//                       <label className="flex items-center">
-//                         <input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
-//                         <span className="ml-2 text-gray-700">Email notifications for new matches</span>
-//                       </label>
-//                       <label className="flex items-center">
-//                         <input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
-//                         <span className="ml-2 text-gray-700">Email notifications for proposal updates</span>
-//                       </label>
-//                       <label className="flex items-center">
-//                         <input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
-//                         <span className="ml-2 text-gray-700">Weekly project summaries</span>
-//                       </label>
+//                       <label className="flex items-center"><input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" /><span className="ml-2 text-gray-700">Email notifications for new matches</span></label>
+//                       <label className="flex items-center"><input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" /><span className="ml-2 text-gray-700">Email notifications for proposal updates</span></label>
+//                       <label className="flex items-center"><input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" /><span className="ml-2 text-gray-700">Weekly project summaries</span></label>
 //                     </div>
 //                   </div>
-                  
 //                   <div>
 //                     <h3 className="text-lg font-medium text-gray-900 mb-4">Privacy Settings</h3>
 //                     <div className="space-y-3">
-//                       <label className="flex items-center">
-//                         <input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
-//                         <span className="ml-2 text-gray-700">Show company profile to consultants</span>
-//                       </label>
-//                       <label className="flex items-center">
-//                         <input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
-//                         <span className="ml-2 text-gray-700">Share contact information with matched consultants</span>
-//                       </label>
+//                       <label className="flex items-center"><input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" /><span className="ml-2 text-gray-700">Show company profile to consultants</span></label>
+//                       <label className="flex items-center"><input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" /><span className="ml-2 text-gray-700">Share contact information with matched consultants</span></label>
 //                     </div>
 //                   </div>
-                  
 //                   <div className="pt-4 border-t border-gray-200">
-//                     <button className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 text-sm">
-//                       Delete Account
-//                     </button>
+//                     <button className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 text-sm">Delete Account</button>
 //                   </div>
 //                 </div>
 //               </div>
@@ -1435,200 +1296,56 @@
 //                   <X className="w-6 h-6 text-gray-400 hover:text-gray-600" />
 //                 </button>
 //               </div>
-              
-//               {error && (
-//                 <div className="mx-6 mt-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-start">
-//                   <AlertCircle className="w-5 h-5 mr-2 flex-shrink-0 mt-0.5" />
-//                   <span className="text-sm">{error}</span>
-//                 </div>
-//               )}
-              
+//               {error && (<div className="mx-6 mt-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-start"><AlertCircle className="w-5 h-5 mr-2 flex-shrink-0 mt-0.5" /><span className="text-sm">{error}</span></div>)}
 //               <form onSubmit={handleSubmitRequest} className="p-6 space-y-6">
-//                 <div>
-//                   <label className="block text-sm font-medium text-gray-700 mb-2">
-//                     Position / Role *
-//                   </label>
-//                   <select
-//                     name="position_id"
-//                     value={newRequest.position_id}
-//                     onChange={handleInputChange}
-//                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-//                     required
-//                   >
+//                 <div><label className="block text-sm font-medium text-gray-700 mb-2">Position / Role *</label>
+//                   <select name="position" value={newRequest.position} onChange={handleInputChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent" required>
 //                     <option value="">Select a position</option>
-//                     {positions.map(pos => (
-//                       <option key={pos.id} value={pos.id}>{pos.name}</option>
-//                     ))}
+//                     {positions.map(pos => (<option key={pos._id} value={pos.name}>{pos.name}</option>))}
 //                   </select>
 //                 </div>
-
-//                 <div>
-//                   <label className="block text-sm font-medium text-gray-700 mb-2">
-//                     Project Title *
-//                   </label>
-//                   <input
-//                     type="text"
-//                     name="title"
-//                     value={newRequest.title}
-//                     onChange={handleInputChange}
-//                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-//                     placeholder="e.g., AI Strategy Implementation"
-//                     required
-//                   />
+//                 <div><label className="block text-sm font-medium text-gray-700 mb-2">Project Title *</label>
+//                   <input type="text" name="title" value={newRequest.title} onChange={handleInputChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent" placeholder="e.g., AI Strategy Implementation" required />
 //                 </div>
-
-//                 <div>
-//                   <label className="block text-sm font-medium text-gray-700 mb-2">
-//                     Project Description *
-//                   </label>
-//                   <textarea
-//                     name="description"
-//                     value={newRequest.description}
-//                     onChange={handleInputChange}
-//                     rows={4}
-//                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-//                     placeholder="Describe your project requirements, goals, and expectations..."
-//                     required
-//                   />
+//                 <div><label className="block text-sm font-medium text-gray-700 mb-2">Project Description *</label>
+//                   <textarea name="description" value={newRequest.description} onChange={handleInputChange} rows={4} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent" placeholder="Describe your project requirements, goals, and expectations..." required />
 //                 </div>
-
 //                 <div className="grid grid-cols-2 gap-4">
-//                   <div>
-//                     <label className="block text-sm font-medium text-gray-700 mb-2">
-//                       Start Date
-//                     </label>
-//                     <input
-//                       type="date"
-//                       name="start_date"
-//                       value={newRequest.start_date}
-//                       onChange={handleInputChange}
-//                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-//                     />
+//                   <div><label className="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
+//                     <input type="date" name="startDate" value={newRequest.startDate} onChange={handleInputChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent" />
 //                   </div>
-//                   <div>
-//                     <label className="block text-sm font-medium text-gray-700 mb-2">
-//                       End Date
-//                     </label>
-//                     <input
-//                       type="date"
-//                       name="end_date"
-//                       value={newRequest.end_date}
-//                       onChange={handleInputChange}
-//                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-//                     />
+//                   <div><label className="block text-sm font-medium text-gray-700 mb-2">End Date</label>
+//                     <input type="date" name="endDate" value={newRequest.endDate} onChange={handleInputChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent" />
 //                   </div>
 //                 </div>
-
 //                 <div className="grid grid-cols-2 gap-4">
-//                   <div>
-//                     <label className="block text-sm font-medium text-gray-700 mb-2">
-//                       Budget Type
-//                     </label>
-//                     <select
-//                       name="budget_type"
-//                       value={newRequest.budget_type}
-//                       onChange={handleInputChange}
-//                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-//                     >
-//                       <option value="daily">Daily Rate</option>
-//                       <option value="hourly">Hourly Rate</option>
-//                       <option value="fixed">Fixed Price</option>
+//                   <div><label className="block text-sm font-medium text-gray-700 mb-2">Budget Type</label>
+//                     <select name="budgetType" value={newRequest.budgetType} onChange={handleInputChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent">
+//                       <option value="daily">Daily Rate</option><option value="hourly">Hourly Rate</option><option value="fixed">Fixed Price</option>
 //                     </select>
 //                   </div>
-//                   <div>
-//                     <label className="block text-sm font-medium text-gray-700 mb-2">
-//                       Budget Amount *
-//                     </label>
-//                     <div className="flex">
-//                       <select
-//                         name="currency"
-//                         value={newRequest.currency}
-//                         onChange={handleInputChange}
-//                         className="w-24 px-4 py-2 border border-r-0 border-gray-300 rounded-l-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-//                       >
-//                         <option value="EUR">€</option>
-//                         <option value="USD">$</option>
-//                         <option value="GBP">£</option>
-//                       </select>
-//                       <input
-//                         type="number"
-//                         name="budget_amount"
-//                         value={newRequest.budget_amount}
-//                         onChange={handleInputChange}
-//                         className="flex-1 px-4 py-2 border border-gray-300 rounded-r-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-//                         placeholder="Amount"
-//                         required
-//                       />
-//                     </div>
+//                   <div><label className="block text-sm font-medium text-gray-700 mb-2">Budget Amount *</label>
+//                     <div className="flex"><select name="currency" value={newRequest.currency} onChange={handleInputChange} className="w-24 px-4 py-2 border border-r-0 border-gray-300 rounded-l-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"><option value="EUR">€</option><option value="USD">$</option><option value="GBP">£</option></select>
+//                     <input type="number" name="budgetAmount" value={newRequest.budgetAmount} onChange={handleInputChange} className="flex-1 px-4 py-2 border border-gray-300 rounded-r-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent" placeholder="Amount" required /></div>
 //                   </div>
 //                 </div>
-
 //                 <div className="grid grid-cols-2 gap-4">
-//                   <div>
-//                     <label className="block text-sm font-medium text-gray-700 mb-2">
-//                       Work Mode
-//                     </label>
-//                     <select
-//                       name="work_mode"
-//                       value={newRequest.work_mode}
-//                       onChange={handleInputChange}
-//                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-//                     >
-//                       <option value="remote">Remote</option>
-//                       <option value="on-site">On-site</option>
-//                       <option value="hybrid">Hybrid</option>
+//                   <div><label className="block text-sm font-medium text-gray-700 mb-2">Work Mode</label>
+//                     <select name="workMode" value={newRequest.workMode} onChange={handleInputChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent">
+//                       <option value="remote">Remote</option><option value="on-site">On-site</option><option value="hybrid">Hybrid</option>
 //                     </select>
 //                   </div>
-//                   <div>
-//                     <label className="block text-sm font-medium text-gray-700 mb-2">
-//                       Country
-//                     </label>
-//                     <input
-//                       type="text"
-//                       name="work_country"
-//                       value={newRequest.work_country}
-//                       onChange={handleInputChange}
-//                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-//                       placeholder="e.g., Germany"
-//                     />
+//                   <div><label className="block text-sm font-medium text-gray-700 mb-2">Country</label>
+//                     <input type="text" name="workCountry" value={newRequest.workCountry} onChange={handleInputChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent" placeholder="e.g., Germany" />
 //                   </div>
 //                 </div>
-
-//                 <div>
-//                   <label className="block text-sm font-medium text-gray-700 mb-2">
-//                     City
-//                   </label>
-//                   <input
-//                     type="text"
-//                     name="work_city"
-//                     value={newRequest.work_city}
-//                     onChange={handleInputChange}
-//                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-//                     placeholder="e.g., Berlin"
-//                   />
+//                 <div><label className="block text-sm font-medium text-gray-700 mb-2">City</label>
+//                   <input type="text" name="workCity" value={newRequest.workCity} onChange={handleInputChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent" placeholder="e.g., Berlin" />
 //                 </div>
-
 //                 <div className="flex justify-end space-x-4 pt-4 border-t">
-//                   <button
-//                     type="button"
-//                     onClick={() => setShowNewRequestModal(false)}
-//                     className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
-//                   >
-//                     Cancel
-//                   </button>
-//                   <button
-//                     type="submit"
-//                     disabled={loading}
-//                     className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center"
-//                   >
-//                     {loading ? (
-//                       <>
-//                         <Loader className="w-4 h-4 animate-spin mr-2" />
-//                         Submitting...
-//                       </>
-//                     ) : (
-//                       'Submit Request'
-//                     )}
+//                   <button type="button" onClick={() => setShowNewRequestModal(false)} className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">Cancel</button>
+//                   <button type="submit" disabled={loading} className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center">
+//                     {loading ? (<><Loader className="w-4 h-4 animate-spin mr-2" />Submitting...</>) : 'Submit Request'}
 //                   </button>
 //                 </div>
 //               </form>
@@ -1645,8 +1362,8 @@
 
 
 
-// src/page/client/Dashboard.jsx (Updated with Calendar & Agenda Tab)
 
+// src/page/client/Dashboard.jsx
 import React, { useState, useEffect } from 'react';
 import {
   Briefcase,
@@ -1676,21 +1393,19 @@ import {
   LifeBuoy,
   Ticket,
   Send,
-  Paperclip,
   ChevronRight,
   Mail,
   Phone,
-  ExternalLink,
-  TrendingUp,
-  Link as LinkIcon,
   Grid,
-  List
+  List,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import ContactSupportModal from '../../components/modals/ContactSupportModal';
 import AvailabilityCalendar from '../../components/AvailabilityCalendar';
 import AgendaWidget from '../../components/AgendaWidget';
+import ProfileCompletionBanner from '../../components/ProfileCompletionBanner';
+import ClientProfileCompletionModal from '../../components/ClientProfileCompletionModal';
 
 // Error Boundary Component
 class ErrorBoundary extends React.Component {
@@ -1727,12 +1442,11 @@ class ErrorBoundary extends React.Component {
         </div>
       );
     }
-
     return this.props.children;
   }
 }
 
-// Support Ticket Component (same as before)
+// Support Ticket Component
 const SupportTicket = ({ ticket, onViewDetails }) => {
   const getStatusColor = (status) => {
     switch(status) {
@@ -1799,14 +1513,13 @@ const SupportTicket = ({ ticket, onViewDetails }) => {
   );
 };
 
-// Ticket Details Modal (same as before)
-const TicketDetailsModal = ({ ticket, onClose, onReply, BACKEND_URL }) => {
+// Ticket Details Modal
+const TicketDetailsModal = ({ ticket, onClose, onReply }) => {
   const [replyMessage, setReplyMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   const handleSubmitReply = async () => {
     if (!replyMessage.trim()) return;
-    
     setSubmitting(true);
     await onReply(ticket._id, replyMessage);
     setReplyMessage('');
@@ -1846,7 +1559,6 @@ const TicketDetailsModal = ({ ticket, onClose, onReply, BACKEND_URL }) => {
           </div>
           
           <div className="p-6">
-            {/* Ticket Header */}
             <div className="mb-6">
               <div className="flex items-center space-x-2 mb-3">
                 <span className={`px-3 py-1 text-sm rounded-full ${getPriorityColor(ticket.priority)}`}>
@@ -1860,7 +1572,6 @@ const TicketDetailsModal = ({ ticket, onClose, onReply, BACKEND_URL }) => {
               <p className="text-sm text-gray-600">Created on {new Date(ticket.createdAt).toLocaleString()}</p>
             </div>
 
-            {/* Original Message */}
             <div className="mb-6 p-4 bg-gray-50 rounded-lg">
               <div className="flex items-center justify-between mb-2">
                 <span className="font-medium text-gray-900">Your Message</span>
@@ -1869,7 +1580,6 @@ const TicketDetailsModal = ({ ticket, onClose, onReply, BACKEND_URL }) => {
               <p className="text-gray-700 whitespace-pre-wrap">{ticket.message}</p>
             </div>
 
-            {/* Replies */}
             {ticket.replies && ticket.replies.length > 0 && (
               <div className="mb-6">
                 <h4 className="font-medium text-gray-900 mb-4">Conversation</h4>
@@ -1893,7 +1603,6 @@ const TicketDetailsModal = ({ ticket, onClose, onReply, BACKEND_URL }) => {
               </div>
             )}
 
-            {/* Reply Form */}
             {ticket.status !== 'closed' && ticket.status !== 'resolved' && (
               <div className="border-t border-gray-200 pt-6">
                 <h4 className="font-medium text-gray-900 mb-3">Add Reply</h4>
@@ -1933,7 +1642,7 @@ const TicketDetailsModal = ({ ticket, onClose, onReply, BACKEND_URL }) => {
 };
 
 const ClientDashboard = () => {
-  const { user, logout, BACKEND_URL } = useAuth();
+  const { user, logout, BACKEND_URL, profileCompletion, updateProfileCompletion } = useAuth();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
@@ -1945,88 +1654,70 @@ const ClientDashboard = () => {
   const [supportTickets, setSupportTickets] = useState([]);
   const [supportLoading, setSupportLoading] = useState(false);
   const [positions, setPositions] = useState([]);
-  const [availabilityData, setAvailabilityData] = useState({});
-  const [calendarView, setCalendarView] = useState('full'); // 'full' or 'compact'
+  const [calendarView, setCalendarView] = useState('full');
+  const [showProfileModal, setShowProfileModal] = useState(false);
   const [dashboardData, setDashboardData] = useState({
     profile: null,
     requests: [],
     matches: []
   });
 
-  // Form state for new request
   const [newRequest, setNewRequest] = useState({
-    position_id: '',
+    position: '',
     title: '',
     description: '',
-    start_date: '',
-    end_date: '',
-    budget_type: 'daily',
-    budget_amount: '',
+    startDate: '',
+    endDate: '',
+    budgetType: 'daily',
+    budgetAmount: '',
     currency: 'EUR',
-    work_country: '',
-    work_city: '',
-    work_mode: 'remote'
+    workCountry: '',
+    workCity: '',
+    workMode: 'remote'
   });
 
-  // Handle availability change (for viewing consultant availability)
-  const handleAvailabilityChange = (date, status, timeRange) => {
-    console.log('Consultant availability viewed:', { date, status, timeRange });
-    // This is for viewing purposes only - clients can see consultant availability
-  };
+  // Define fetchDashboardData as a function that can be called from multiple places
+  const fetchDashboardData = async () => {
+    if (!user?.email) {
+      setLoading(false);
+      return;
+    }
 
-  // Fetch dashboard data
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      if (!user?.email) {
-        setLoading(false);
-        return;
+    try {
+      setLoading(true);
+      setError('');
+      
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch(`${BACKEND_URL}/api/dashboard/${encodeURIComponent(user.email)}`, {
+        headers: {
+          'Authorization': token ? `Bearer ${token}` : '',
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      try {
-        setLoading(true);
-        setError('');
-        
-        const token = localStorage.getItem('auth_token');
-        const response = await fetch(`${BACKEND_URL}/api/user/dashboard/${encodeURIComponent(user.email)}`, {
-          headers: {
-            'Authorization': token ? `Bearer ${token}` : '',
-            'Content-Type': 'application/json'
-          }
+      const result = await response.json();
+
+      if (result.success && result.data) {
+        setDashboardData({
+          profile: result.data.profile || null,
+          requests: Array.isArray(result.data.recentRequests) ? result.data.recentRequests : [],
+          matches: Array.isArray(result.data.recentMatches) ? result.data.recentMatches : []
         });
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const result = await response.json();
-
-        if (result.success && result.data) {
-          setDashboardData({
-            profile: result.data.profile || null,
-            requests: Array.isArray(result.data.requests) ? result.data.requests : [],
-            matches: Array.isArray(result.data.matches) ? result.data.matches : []
-          });
-
-          // Load availability data if exists
-          if (result.data.profile?.availability) {
-            setAvailabilityData(result.data.profile.availability);
-          }
-
-          // Fetch support tickets after dashboard data
-          await fetchSupportTickets();
-        } else {
-          setError(result.error || 'Failed to load dashboard data');
-        }
-      } catch (err) {
-        console.error('Error fetching dashboard:', err);
-        setError('Network error. Please check your connection and try again.');
-      } finally {
-        setLoading(false);
+        await fetchSupportTickets();
+      } else {
+        setError(result.error || 'Failed to load dashboard data');
       }
-    };
-
-    fetchDashboardData();
-  }, [user, BACKEND_URL]);
+    } catch (err) {
+      console.error('Error fetching dashboard:', err);
+      setError('Network error. Please check your connection and try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Fetch support tickets
   const fetchSupportTickets = async () => {
@@ -2035,7 +1726,7 @@ const ClientDashboard = () => {
     try {
       setSupportLoading(true);
       const token = localStorage.getItem('auth_token');
-      const response = await fetch(`${BACKEND_URL}/api/user/support-requests/${encodeURIComponent(user.email)}`, {
+      const response = await fetch(`${BACKEND_URL}/api/support/user/${encodeURIComponent(user.email)}`, {
         headers: {
           'Authorization': token ? `Bearer ${token}` : '',
           'Content-Type': 'application/json'
@@ -2056,10 +1747,9 @@ const ClientDashboard = () => {
   // Fetch ticket details
   const fetchTicketDetails = async (ticket) => {
     try {
-      setLoading(true);
       const token = localStorage.getItem('auth_token');
       const response = await fetch(
-        `${BACKEND_URL}/api/user/support-requests/${encodeURIComponent(user.email)}/${ticket.ticketId}`,
+        `${BACKEND_URL}/api/support/ticket/${ticket.ticketId}?email=${encodeURIComponent(user.email)}`,
         {
           headers: {
             'Authorization': token ? `Bearer ${token}` : '',
@@ -2077,8 +1767,6 @@ const ClientDashboard = () => {
       }
     } catch (err) {
       console.error('Error fetching ticket details:', err);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -2107,7 +1795,7 @@ const ClientDashboard = () => {
     }
   };
 
-  // Fetch positions for dropdown
+  // Fetch positions
   useEffect(() => {
     const fetchPositions = async () => {
       try {
@@ -2120,19 +1808,40 @@ const ClientDashboard = () => {
         console.error('Error fetching positions:', err);
       }
     };
-
     fetchPositions();
   }, [BACKEND_URL]);
 
-  // Safe data access
+  // Initial data fetch
+  useEffect(() => {
+    if (user?.email) {
+      fetchDashboardData();
+    }
+  }, [user, BACKEND_URL]);
+
+  // Check if profile is incomplete and show modal after delay
+  useEffect(() => {
+    if (user && profileCompletion.status !== 'complete') {
+      const timer = setTimeout(() => {
+        setShowProfileModal(true);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [user, profileCompletion]);
+
+  const handleProfileComplete = () => {
+    setShowProfileModal(false);
+    // Refresh dashboard data
+    fetchDashboardData();
+  };
+
   const companyProfile = dashboardData.profile ? {
-    name: dashboardData.profile.company_name || user?.name || 'Company Name',
+    name: dashboardData.profile.companyName || user?.name || 'Company Name',
     industry: dashboardData.profile.industry || 'Technology',
-    size: dashboardData.profile.company_size || 'Company size not set',
+    size: dashboardData.profile.companySize || 'Company size not set',
     location: dashboardData.profile.location || 'Location not set',
-    verified: dashboardData.profile.is_verified || false,
-    contact_name: dashboardData.profile.contact_name || '',
-    contact_title: dashboardData.profile.contact_title || '',
+    verified: dashboardData.profile.isVerified || false,
+    contactName: dashboardData.profile.contactName || '',
+    contactTitle: dashboardData.profile.contactTitle || '',
     phone: dashboardData.profile.phone || '',
     website: dashboardData.profile.website || ''
   } : {
@@ -2141,45 +1850,42 @@ const ClientDashboard = () => {
     size: 'Company size not set',
     location: 'Location not set',
     verified: false,
-    contact_name: '',
-    contact_title: '',
+    contactName: '',
+    contactTitle: '',
     phone: '',
     website: ''
   };
 
-  // Format requests
   const activeRequests = Array.isArray(dashboardData.requests) 
     ? dashboardData.requests.map(request => ({
-        id: request.id,
+        id: request._id || request.id,
         title: request.title || 'Untitled Request',
-        posted: request.created_at ? new Date(request.created_at).toLocaleDateString() : 'Recently',
+        posted: request.createdAt ? new Date(request.createdAt).toLocaleDateString() : 'Recently',
         proposals: request.proposal_count || 0,
         shortlisted: request.shortlisted_count || 0,
-        match_count: request.match_count || 0,
+        matchCount: request.matchCount || 0,
         status: request.status || 'submitted',
-        position: request.position_name || 'General',
-        work_mode: request.work_mode || 'remote',
-        location: request.work_city && request.work_country 
-          ? `${request.work_city}, ${request.work_country}`
+        position: request.positionName || (request.position_id?.name) || 'General',
+        workMode: request.workMode || 'remote',
+        location: request.workCity && request.workCountry 
+          ? `${request.workCity}, ${request.workCountry}`
           : 'Location TBD'
       }))
     : [];
 
-  // Format matches
   const matches = Array.isArray(dashboardData.matches)
     ? dashboardData.matches.map(match => ({
-        id: match.id,
-        consultant: match.consultant_name || 'Consultant',
-        expertise: match.consultant_positions || 'General',
-        matchScore: match.match_score || 0,
-        status: match.admin_review_status || 'suggested',
-        proposedRate: match.proposed_rate || 'Rate TBD',
-        availability: match.availability || 'Check availability',
-        location: match.consultant_location || 'Location not specified'
+        id: match._id || match.id,
+        consultant: match.consultantName || match.consultant_name || 'Consultant',
+        expertise: match.consultantPositions || match.expertise || 'General',
+        matchScore: match.matchScore || 0,
+        status: match.adminReviewStatus || match.status || 'suggested',
+        proposedRate: match.proposedRate || 'Rate TBD',
+        location: match.consultantLocation || match.location || 'Location not specified',
+        companyName: match.companyName || ''
       }))
     : [];
 
-  // Calculate stats
   const stats = [
     { 
       label: 'Active Projects', 
@@ -2189,13 +1895,13 @@ const ClientDashboard = () => {
     },
     { 
       label: 'Total Proposals', 
-      value: activeRequests.reduce((sum, r) => sum + r.proposals, 0).toString(), 
+      value: activeRequests.reduce((sum, r) => sum + (r.proposals || 0), 0).toString(), 
       icon: <FileText className="w-5 h-5" />,
       change: '0 new'
     },
     { 
       label: 'Interviews', 
-      value: matches.filter(m => m.status === 'interviewing').length.toString(), 
+      value: matches.filter(m => m.status === 'interviewing' || m.status === 'shortlisted').length.toString(), 
       icon: <Users className="w-5 h-5" />,
       change: '0 scheduled'
     },
@@ -2223,10 +1929,7 @@ const ClientDashboard = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setNewRequest(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setNewRequest(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSubmitRequest = async (e) => {
@@ -2236,7 +1939,7 @@ const ClientDashboard = () => {
 
     try {
       const token = localStorage.getItem('auth_token');
-      const response = await fetch(`${BACKEND_URL}/api/create-client-request`, {
+      const response = await fetch(`${BACKEND_URL}/api/client/create-request`, {
         method: 'POST',
         headers: {
           'Authorization': token ? `Bearer ${token}` : '',
@@ -2252,7 +1955,7 @@ const ClientDashboard = () => {
 
       if (result.success) {
         setShowNewRequestModal(false);
-        window.location.reload();
+        await fetchDashboardData();
       } else {
         setError(result.error || 'Failed to create request');
       }
@@ -2264,12 +1967,8 @@ const ClientDashboard = () => {
     }
   };
 
-  const handleViewRequest = (requestId) => {
-    console.log('View request:', requestId);
-  };
-
-  const handleContactConsultant = (matchId) => {
-    console.log('Contact consultant:', matchId);
+  const handleEditProfile = () => {
+    setShowProfileModal(true);
   };
 
   if (loading) {
@@ -2283,7 +1982,7 @@ const ClientDashboard = () => {
     );
   }
 
-  if (error) {
+  if (error && !dashboardData.profile) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center max-w-md p-8">
@@ -2318,7 +2017,18 @@ const ClientDashboard = () => {
             ticket={selectedTicket}
             onClose={() => setSelectedTicket(null)}
             onReply={handleSubmitReply}
+          />
+        )}
+
+        {/* Profile Completion Modal */}
+        {showProfileModal && (
+          <ClientProfileCompletionModal
+            isOpen={showProfileModal}
+            onClose={() => setShowProfileModal(false)}
+            onComplete={handleProfileComplete}
+            user={user}
             BACKEND_URL={BACKEND_URL}
+            updateProfileCompletion={updateProfileCompletion}
           />
         )}
 
@@ -2336,7 +2046,7 @@ const ClientDashboard = () => {
             <div className="px-4 py-6 border-b border-gray-700">
               <div className="flex items-center space-x-3">
                 <div className="rounded-lg">
-                  <img src="/logo.png" alt="Logo" className="h-20 object-contain" />
+                  <img src="/logo.png" alt="Logo" className="h-12 object-contain" />
                 </div>
                 <div>
                   <h2 className="font-bold text-lg">Client Panel</h2>
@@ -2364,7 +2074,6 @@ const ClientDashboard = () => {
                 { id: 'requests', label: 'My Requests', icon: <FileText className="w-5 h-5" /> },
                 { id: 'matches', label: 'Matches', icon: <UserCheck className="w-5 h-5" /> },
                 { id: 'consultants', label: 'Consultants', icon: <Users className="w-5 h-5" /> },
-                { id: 'messages', label: 'Messages', icon: <MessageSquare className="w-5 h-5" /> },
                 { id: 'support', label: 'Support', icon: <LifeBuoy className="w-5 h-5" /> },
                 { id: 'profile', label: 'Company Profile', icon: <Building className="w-5 h-5" /> },
                 { id: 'settings', label: 'Settings', icon: <Settings className="w-5 h-5" /> }
@@ -2399,23 +2108,15 @@ const ClientDashboard = () => {
           <nav className="bg-white shadow-sm sticky top-0 z-10">
             <div className="px-4 sm:px-6 lg:px-8">
               <div className="flex justify-between items-center h-16">
-                <button
-                  onClick={() => setSidebarOpen(true)}
-                  className="lg:hidden text-gray-500 hover:text-gray-700"
-                >
+                <button onClick={() => setSidebarOpen(true)} className="lg:hidden text-gray-500 hover:text-gray-700">
                   <Menu className="w-6 h-6" />
                 </button>
-
                 <div className="flex-1 flex justify-end items-center space-x-4">
                   <button className="relative p-2 text-gray-400 hover:text-gray-600">
                     <Bell className="w-6 h-6" />
                     <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
                   </button>
-                  <button
-                    onClick={() => setIsSupportModalOpen(true)}
-                    className="p-2 text-gray-400 hover:text-gray-600 relative group"
-                    title="Contact Support"
-                  >
+                  <button onClick={() => setIsSupportModalOpen(true)} className="p-2 text-gray-400 hover:text-gray-600" title="Contact Support">
                     <HelpCircle className="w-6 h-6" />
                   </button>
                   <div className="flex items-center space-x-3">
@@ -2430,6 +2131,12 @@ const ClientDashboard = () => {
           </nav>
 
           <main className="p-4 sm:p-6 lg:p-8">
+            <ProfileCompletionBanner 
+              profileCompletion={profileCompletion} 
+              onComplete={() => setShowProfileModal(true)}
+            />
+            
+            {/* Overview Tab */}
             {activeTab === 'overview' && (
               <>
                 <div className="flex justify-between items-center mb-8">
@@ -2437,23 +2144,17 @@ const ClientDashboard = () => {
                     <h1 className="text-2xl font-bold text-gray-900">Welcome back, {companyProfile.name}</h1>
                     <p className="text-gray-600">Find the perfect consultant for your projects.</p>
                   </div>
-                  <button
-                    onClick={() => setShowNewRequestModal(true)}
-                    className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 flex items-center"
-                  >
+                  <button onClick={() => setShowNewRequestModal(true)} className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 flex items-center">
                     <Plus className="w-5 h-5 mr-2" />
                     New Request
                   </button>
                 </div>
 
-                {/* Stats Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                   {stats.map((stat, index) => (
                     <div key={index} className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
                       <div className="flex items-center justify-between mb-4">
-                        <div className="bg-blue-100 p-3 rounded-lg text-blue-600">
-                          {stat.icon}
-                        </div>
+                        <div className="bg-blue-100 p-3 rounded-lg text-blue-600">{stat.icon}</div>
                         <span className="text-sm text-green-600">{stat.change}</span>
                       </div>
                       <h3 className="text-2xl font-bold text-gray-900">{stat.value}</h3>
@@ -2462,24 +2163,20 @@ const ClientDashboard = () => {
                   ))}
                 </div>
 
-                {/* Quick Calendar Preview */}
                 <div className="mb-8 bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                   <div className="flex justify-between items-center mb-4">
                     <h2 className="text-lg font-semibold text-gray-900">Consultant Schedule Preview</h2>
-                    <button 
-                      onClick={() => setActiveTab('calendar')}
-                      className="text-sm text-blue-600 hover:text-blue-700 font-medium"
-                    >
+                    <button onClick={() => setActiveTab('calendar')} className="text-sm text-blue-600 hover:text-blue-700 font-medium">
                       View Full Calendar →
                     </button>
                   </div>
                   <div className="grid lg:grid-cols-2 gap-6">
                     <AvailabilityCalendar
-                      userId={user?.email}
+                      userId="all"
                       userType="client"
                       BACKEND_URL={BACKEND_URL}
                       readOnly={true}
-                      onAvailabilityChange={handleAvailabilityChange}
+                      onAvailabilityChange={() => {}}
                       compact={true}
                     />
                     <AgendaWidget
@@ -2491,27 +2188,16 @@ const ClientDashboard = () => {
                   </div>
                 </div>
 
-                {/* Two Column Layout */}
                 <div className="grid lg:grid-cols-2 gap-6">
-                  {/* Active Requests */}
                   <div className="bg-white rounded-xl shadow-sm border border-gray-200">
                     <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
                       <h2 className="text-lg font-semibold text-gray-900">Active Requests</h2>
-                      <button 
-                        onClick={() => setActiveTab('requests')}
-                        className="text-sm text-blue-600 hover:text-blue-700"
-                      >
-                        View All
-                      </button>
+                      <button onClick={() => setActiveTab('requests')} className="text-sm text-blue-600 hover:text-blue-700">View All</button>
                     </div>
                     <div className="p-6">
                       {activeRequests.length > 0 ? (
                         activeRequests.slice(0, 3).map((request) => (
-                          <div 
-                            key={request.id} 
-                            className="mb-4 last:mb-0 p-4 bg-gray-50 rounded-lg hover:shadow-md transition cursor-pointer"
-                            onClick={() => handleViewRequest(request.id)}
-                          >
+                          <div key={request.id} className="mb-4 last:mb-0 p-4 bg-gray-50 rounded-lg hover:shadow-md transition cursor-pointer">
                             <div className="flex justify-between items-start mb-2">
                               <h3 className="font-medium text-gray-900">{request.title}</h3>
                               <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(request.status)}`}>
@@ -2521,20 +2207,12 @@ const ClientDashboard = () => {
                             <p className="text-sm text-gray-600 mb-2">{request.position}</p>
                             <div className="flex items-center justify-between text-sm">
                               <div className="flex items-center space-x-4 text-gray-500">
-                                <span className="flex items-center">
-                                  <MapPin className="w-4 h-4 mr-1" />
-                                  {request.location}
-                                </span>
-                                <span className="flex items-center">
-                                  <Clock className="w-4 h-4 mr-1" />
-                                  {request.work_mode}
-                                </span>
+                                <span className="flex items-center"><MapPin className="w-4 h-4 mr-1" />{request.location}</span>
+                                <span className="flex items-center"><Clock className="w-4 h-4 mr-1" />{request.workMode}</span>
                               </div>
                               <div className="flex items-center space-x-4">
-                                <span className="text-gray-600">{request.match_count} matches</span>
-                                <button className="text-blue-600 hover:text-blue-700 font-medium text-sm">
-                                  View →
-                                </button>
+                                <span className="text-gray-600">{request.matchCount} matches</span>
+                                <button className="text-blue-600 hover:text-blue-700 font-medium text-sm">View →</button>
                               </div>
                             </div>
                           </div>
@@ -2545,10 +2223,7 @@ const ClientDashboard = () => {
                             <FileText className="w-8 h-8 text-gray-400" />
                           </div>
                           <p className="text-gray-500 mb-2">No active requests</p>
-                          <button
-                            onClick={() => setShowNewRequestModal(true)}
-                            className="text-blue-600 hover:text-blue-700 text-sm font-medium"
-                          >
+                          <button onClick={() => setShowNewRequestModal(true)} className="text-blue-600 hover:text-blue-700 text-sm font-medium">
                             Create your first request →
                           </button>
                         </div>
@@ -2556,44 +2231,26 @@ const ClientDashboard = () => {
                     </div>
                   </div>
 
-                  {/* Support Tickets Preview */}
                   <div className="bg-white rounded-xl shadow-sm border border-gray-200">
                     <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
                       <h2 className="text-lg font-semibold text-gray-900">Support Tickets</h2>
-                      <button 
-                        onClick={() => setActiveTab('support')}
-                        className="text-sm text-blue-600 hover:text-blue-700"
-                      >
-                        View All
-                      </button>
+                      <button onClick={() => setActiveTab('support')} className="text-sm text-blue-600 hover:text-blue-700">View All</button>
                     </div>
                     <div className="p-6">
                       {supportLoading ? (
-                        <div className="flex justify-center py-8">
-                          <Loader className="w-6 h-6 animate-spin text-blue-600" />
-                        </div>
+                        <div className="flex justify-center py-8"><Loader className="w-6 h-6 animate-spin text-blue-600" /></div>
                       ) : supportTickets.length > 0 ? (
                         <div className="space-y-3">
                           {supportTickets.slice(0, 2).map((ticket) => (
-                            <div
-                              key={ticket._id}
-                              onClick={() => fetchTicketDetails(ticket)}
-                              className="p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer transition"
-                            >
+                            <div key={ticket._id} onClick={() => fetchTicketDetails(ticket)} className="p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer transition">
                               <div className="flex items-center justify-between mb-1">
                                 <span className="text-xs font-mono text-blue-600">{ticket.ticketId}</span>
-                                <span className={`px-2 py-0.5 text-xs rounded-full ${
-                                  ticket.status === 'new' ? 'bg-yellow-100 text-yellow-800' :
-                                  ticket.status === 'in_progress' ? 'bg-blue-100 text-blue-800' :
-                                  'bg-green-100 text-green-800'
-                                }`}>
+                                <span className={`px-2 py-0.5 text-xs rounded-full ${ticket.status === 'new' ? 'bg-yellow-100 text-yellow-800' : ticket.status === 'in_progress' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}`}>
                                   {ticket.status}
                                 </span>
                               </div>
                               <p className="text-sm font-medium text-gray-900 truncate">{ticket.subject}</p>
-                              <p className="text-xs text-gray-500 mt-1">
-                                {new Date(ticket.createdAt).toLocaleDateString()}
-                              </p>
+                              <p className="text-xs text-gray-500 mt-1">{new Date(ticket.createdAt).toLocaleDateString()}</p>
                             </div>
                           ))}
                         </div>
@@ -2603,10 +2260,7 @@ const ClientDashboard = () => {
                             <Ticket className="w-6 h-6 text-gray-400" />
                           </div>
                           <p className="text-gray-500 text-sm mb-2">No support tickets</p>
-                          <button
-                            onClick={() => setIsSupportModalOpen(true)}
-                            className="text-sm text-blue-600 hover:text-blue-700 font-medium"
-                          >
+                          <button onClick={() => setIsSupportModalOpen(true)} className="text-sm text-blue-600 hover:text-blue-700 font-medium">
                             Contact Support →
                           </button>
                         </div>
@@ -2615,17 +2269,11 @@ const ClientDashboard = () => {
                   </div>
                 </div>
 
-                {/* Top Matches Section */}
                 {matches.length > 0 && (
                   <div className="mt-6 bg-white rounded-xl shadow-sm border border-gray-200">
                     <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
                       <h2 className="text-lg font-semibold text-gray-900">Top Consultant Matches</h2>
-                      <button 
-                        onClick={() => setActiveTab('matches')}
-                        className="text-sm text-blue-600 hover:text-blue-700"
-                      >
-                        View All Matches
-                      </button>
+                      <button onClick={() => setActiveTab('matches')} className="text-sm text-blue-600 hover:text-blue-700">View All Matches</button>
                     </div>
                     <div className="p-6">
                       <div className="grid md:grid-cols-2 gap-4">
@@ -2646,12 +2294,7 @@ const ClientDashboard = () => {
                                 <MapPin className="w-4 h-4" />
                                 <span>{match.location}</span>
                               </div>
-                              <button 
-                                onClick={() => handleContactConsultant(match.id)}
-                                className="text-blue-600 hover:text-blue-700 font-medium text-sm"
-                              >
-                                Contact →
-                              </button>
+                              <button className="text-blue-600 hover:text-blue-700 font-medium text-sm">Contact →</button>
                             </div>
                           </div>
                         ))}
@@ -2662,65 +2305,43 @@ const ClientDashboard = () => {
               </>
             )}
 
-            {/* NEW: Calendar & Agenda Tab */}
+            {/* Calendar Tab */}
             {activeTab === 'calendar' && (
               <div className="space-y-6">
-                {/* Header */}
                 <div className="flex justify-between items-center">
                   <div>
                     <h1 className="text-2xl font-bold text-gray-900">Consultant Availability & Agenda</h1>
                     <p className="text-gray-600 mt-1">View consultant availability and track your upcoming engagements</p>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <button
-                      onClick={() => setCalendarView('full')}
-                      className={`p-2 rounded-lg transition ${
-                        calendarView === 'full' 
-                          ? 'bg-blue-100 text-blue-600' 
-                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                      }`}
-                      title="Full View"
-                    >
+                    <button onClick={() => setCalendarView('full')} className={`p-2 rounded-lg transition ${calendarView === 'full' ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
                       <Grid className="w-5 h-5" />
                     </button>
-                    <button
-                      onClick={() => setCalendarView('compact')}
-                      className={`p-2 rounded-lg transition ${
-                        calendarView === 'compact' 
-                          ? 'bg-blue-100 text-blue-600' 
-                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                      }`}
-                      title="Compact View"
-                    >
+                    <button onClick={() => setCalendarView('compact')} className={`p-2 rounded-lg transition ${calendarView === 'compact' ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
                       <List className="w-5 h-5" />
                     </button>
                   </div>
                 </div>
 
-                {/* Calendar and Agenda Layout */}
                 <div className={`grid ${calendarView === 'full' ? 'lg:grid-cols-3' : 'lg:grid-cols-2'} gap-6`}>
-                  {/* Consultant Availability Calendar Section */}
                   <div className={calendarView === 'full' ? 'lg:col-span-2' : 'lg:col-span-1'}>
                     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                       <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                         <Calendar className="w-5 h-5 mr-2 text-blue-600" />
                         Consultant Availability Calendar
                       </h2>
-                      <p className="text-sm text-gray-500 mb-4">
-                        View when consultants are available for new projects. Green dates show available consultants.
-                      </p>
+                      <p className="text-sm text-gray-500 mb-4">View when consultants are available for new projects. Green dates show available consultants.</p>
                       <AvailabilityCalendar
                         userId="all"
                         userType="client"
                         BACKEND_URL={BACKEND_URL}
                         readOnly={true}
-                        onAvailabilityChange={handleAvailabilityChange}
+                        onAvailabilityChange={() => {}}
                         compact={calendarView === 'compact'}
                       />
                     </div>
                   </div>
 
-                  {/* Agenda Widget Section */}
                   <div className={calendarView === 'full' ? 'lg:col-span-1' : 'lg:col-span-1'}>
                     <AgendaWidget
                       userId={user?.email}
@@ -2731,7 +2352,6 @@ const ClientDashboard = () => {
                   </div>
                 </div>
 
-                {/* Upcoming Interviews Section */}
                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                   <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                     <MessageSquare className="w-5 h-5 mr-2 text-green-600" />
@@ -2749,12 +2369,7 @@ const ClientDashboard = () => {
                             <span className="inline-block px-2 py-1 text-xs rounded-full bg-green-100 text-green-800 mb-1">
                               {match.status === 'shortlisted' ? 'Shortlisted' : 'Interview Scheduled'}
                             </span>
-                            <button 
-                              onClick={() => handleContactConsultant(match.id)}
-                              className="block text-sm text-blue-600 hover:text-blue-700 mt-1"
-                            >
-                              Schedule Interview →
-                            </button>
+                            <button className="block text-sm text-blue-600 hover:text-blue-700 mt-1">Schedule Interview →</button>
                           </div>
                         </div>
                       ))}
@@ -2767,7 +2382,6 @@ const ClientDashboard = () => {
                   )}
                 </div>
 
-                {/* Consultant Availability Tips */}
                 <div className="bg-blue-50 rounded-xl border border-blue-200 p-6">
                   <h3 className="font-semibold text-blue-900 mb-2 flex items-center">
                     <HelpCircle className="w-5 h-5 mr-2" />
@@ -2788,15 +2402,11 @@ const ClientDashboard = () => {
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                 <div className="flex justify-between items-center mb-6">
                   <h2 className="text-xl font-bold text-gray-900">My Project Requests</h2>
-                  <button
-                    onClick={() => setShowNewRequestModal(true)}
-                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center text-sm"
-                  >
+                  <button onClick={() => setShowNewRequestModal(true)} className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center text-sm">
                     <Plus className="w-4 h-4 mr-2" />
                     New Request
                   </button>
                 </div>
-                
                 {activeRequests.length > 0 ? (
                   <div className="space-y-4">
                     {activeRequests.map((request) => (
@@ -2812,20 +2422,12 @@ const ClientDashboard = () => {
                         </div>
                         <div className="flex items-center justify-between text-sm">
                           <div className="flex items-center space-x-4 text-gray-500">
-                            <span className="flex items-center">
-                              <MapPin className="w-4 h-4 mr-1" />
-                              {request.location}
-                            </span>
-                            <span className="flex items-center">
-                              <Clock className="w-4 h-4 mr-1" />
-                              {request.work_mode}
-                            </span>
+                            <span className="flex items-center"><MapPin className="w-4 h-4 mr-1" />{request.location}</span>
+                            <span className="flex items-center"><Clock className="w-4 h-4 mr-1" />{request.workMode}</span>
                           </div>
                           <div className="flex items-center space-x-4">
-                            <span className="text-gray-600">{request.match_count} matches</span>
-                            <button className="text-blue-600 hover:text-blue-700 font-medium">
-                              View Details →
-                            </button>
+                            <span className="text-gray-600">{request.matchCount} matches</span>
+                            <button className="text-blue-600 hover:text-blue-700 font-medium">View Details →</button>
                           </div>
                         </div>
                       </div>
@@ -2838,10 +2440,7 @@ const ClientDashboard = () => {
                     </div>
                     <h3 className="text-lg font-medium text-gray-900 mb-2">No requests yet</h3>
                     <p className="text-gray-500 mb-6">Create your first project request to find consultants</p>
-                    <button
-                      onClick={() => setShowNewRequestModal(true)}
-                      className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700"
-                    >
+                    <button onClick={() => setShowNewRequestModal(true)} className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700">
                       Create New Request
                     </button>
                   </div>
@@ -2853,7 +2452,6 @@ const ClientDashboard = () => {
             {activeTab === 'matches' && (
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                 <h2 className="text-xl font-bold text-gray-900 mb-6">Consultant Matches</h2>
-                
                 {matches.length > 0 ? (
                   <div className="space-y-4">
                     {matches.map((match) => (
@@ -2874,22 +2472,11 @@ const ClientDashboard = () => {
                           </span>
                         </div>
                         <div className="grid grid-cols-2 gap-4 mb-3 text-sm">
-                          <div className="flex items-center text-gray-500">
-                            <MapPin className="w-4 h-4 mr-1" />
-                            {match.location}
-                          </div>
-                          <div className="flex items-center text-gray-500">
-                            <DollarSign className="w-4 h-4 mr-1" />
-                            {match.proposedRate}
-                          </div>
+                          <div className="flex items-center text-gray-500"><MapPin className="w-4 h-4 mr-1" />{match.location}</div>
+                          <div className="flex items-center text-gray-500"><DollarSign className="w-4 h-4 mr-1" />{match.proposedRate}</div>
                         </div>
                         <div className="flex justify-end">
-                          <button 
-                            onClick={() => handleContactConsultant(match.id)}
-                            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 text-sm"
-                          >
-                            Contact Consultant
-                          </button>
+                          <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 text-sm">Contact Consultant</button>
                         </div>
                       </div>
                     ))}
@@ -2901,10 +2488,7 @@ const ClientDashboard = () => {
                     </div>
                     <h3 className="text-lg font-medium text-gray-900 mb-2">No matches yet</h3>
                     <p className="text-gray-500 mb-6">Create a project request to get matched with consultants</p>
-                    <button
-                      onClick={() => setShowNewRequestModal(true)}
-                      className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700"
-                    >
+                    <button onClick={() => setShowNewRequestModal(true)} className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700">
                       Create Request
                     </button>
                   </div>
@@ -2912,43 +2496,31 @@ const ClientDashboard = () => {
               </div>
             )}
 
-            {/* Consultants Tab - Browse Available Consultants */}
+            {/* Consultants Tab */}
             {activeTab === 'consultants' && (
-              <div className="space-y-6">
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                  <div className="flex justify-between items-center mb-6">
-                    <div>
-                      <h2 className="text-xl font-bold text-gray-900">Browse Consultants</h2>
-                      <p className="text-gray-600 mt-1">Find and connect with top consultants</p>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <div className="relative">
-                        <Search className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                        <input
-                          type="text"
-                          placeholder="Search consultants..."
-                          className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        />
-                      </div>
-                      <button className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50">
-                        <Filter className="w-5 h-5 text-gray-500" />
-                      </button>
-                    </div>
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <div className="flex justify-between items-center mb-6">
+                  <div>
+                    <h2 className="text-xl font-bold text-gray-900">Browse Consultants</h2>
+                    <p className="text-gray-600 mt-1">Find and connect with top consultants</p>
                   </div>
-
-                  <div className="text-center py-12">
-                    <div className="bg-gray-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <Users className="w-10 h-10 text-gray-400" />
+                  <div className="flex items-center space-x-2">
+                    <div className="relative">
+                      <Search className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                      <input type="text" placeholder="Search consultants..." className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
                     </div>
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">Consultant Directory Coming Soon</h3>
-                    <p className="text-gray-500">Create a project request and we'll find the best matches for you</p>
-                    <button
-                      onClick={() => setShowNewRequestModal(true)}
-                      className="mt-4 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
-                    >
-                      Create Request
-                    </button>
+                    <button className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50"><Filter className="w-5 h-5 text-gray-500" /></button>
                   </div>
+                </div>
+                <div className="text-center py-12">
+                  <div className="bg-gray-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Users className="w-10 h-10 text-gray-400" />
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">Consultant Directory Coming Soon</h3>
+                  <p className="text-gray-500">Create a project request and we'll find the best matches for you</p>
+                  <button onClick={() => setShowNewRequestModal(true)} className="mt-4 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
+                    Create Request
+                  </button>
                 </div>
               </div>
             )}
@@ -2956,69 +2528,48 @@ const ClientDashboard = () => {
             {/* Support Tab */}
             {activeTab === 'support' && (
               <div className="space-y-6">
-                {/* Support Header */}
                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                   <div className="flex items-center justify-between">
                     <div>
                       <h2 className="text-2xl font-bold text-gray-900">Support Center</h2>
                       <p className="text-gray-600 mt-1">Get help with your projects, account, or technical issues</p>
                     </div>
-                    <button
-                      onClick={() => setIsSupportModalOpen(true)}
-                      className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition font-medium flex items-center"
-                    >
+                    <button onClick={() => setIsSupportModalOpen(true)} className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition font-medium flex items-center">
                       <HelpCircle className="w-5 h-5 mr-2" />
                       Contact Support
                     </button>
                   </div>
                 </div>
 
-                {/* Quick Support Options */}
                 <div className="grid md:grid-cols-3 gap-4">
                   <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center hover:shadow-md transition">
-                    <div className="bg-blue-100 w-12 h-12 rounded-lg flex items-center justify-center mx-auto mb-4">
-                      <Mail className="w-6 h-6 text-blue-600" />
-                    </div>
+                    <div className="bg-blue-100 w-12 h-12 rounded-lg flex items-center justify-center mx-auto mb-4"><Mail className="w-6 h-6 text-blue-600" /></div>
                     <h3 className="font-semibold text-gray-900 mb-2">Email Support</h3>
                     <p className="text-sm text-gray-600 mb-3">support@webconsultanthub.com</p>
                     <p className="text-xs text-gray-500">Reply within 24 hours</p>
                   </div>
-
                   <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center hover:shadow-md transition">
-                    <div className="bg-green-100 w-12 h-12 rounded-lg flex items-center justify-center mx-auto mb-4">
-                      <MessageSquare className="w-6 h-6 text-green-600" />
-                    </div>
+                    <div className="bg-green-100 w-12 h-12 rounded-lg flex items-center justify-center mx-auto mb-4"><MessageSquare className="w-6 h-6 text-green-600" /></div>
                     <h3 className="font-semibold text-gray-900 mb-2">Live Chat</h3>
                     <p className="text-sm text-gray-600 mb-3">Chat with support team</p>
                     <p className="text-xs text-gray-500">Available 24/7</p>
                   </div>
-
                   <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center hover:shadow-md transition">
-                    <div className="bg-purple-100 w-12 h-12 rounded-lg flex items-center justify-center mx-auto mb-4">
-                      <FileText className="w-6 h-6 text-purple-600" />
-                    </div>
+                    <div className="bg-purple-100 w-12 h-12 rounded-lg flex items-center justify-center mx-auto mb-4"><FileText className="w-6 h-6 text-purple-600" /></div>
                     <h3 className="font-semibold text-gray-900 mb-2">Help Center</h3>
                     <p className="text-sm text-gray-600 mb-3">Browse knowledge base</p>
                     <p className="text-xs text-gray-500">Self-service resources</p>
                   </div>
                 </div>
 
-                {/* Support Tickets */}
                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Your Support Tickets</h3>
-                  
                   {supportLoading ? (
-                    <div className="flex justify-center py-8">
-                      <Loader className="w-8 h-8 animate-spin text-blue-600" />
-                    </div>
+                    <div className="flex justify-center py-8"><Loader className="w-8 h-8 animate-spin text-blue-600" /></div>
                   ) : supportTickets.length > 0 ? (
                     <div className="space-y-4">
                       {supportTickets.map((ticket) => (
-                        <SupportTicket
-                          key={ticket._id}
-                          ticket={ticket}
-                          onViewDetails={fetchTicketDetails}
-                        />
+                        <SupportTicket key={ticket._id} ticket={ticket} onViewDetails={fetchTicketDetails} />
                       ))}
                     </div>
                   ) : (
@@ -3028,17 +2579,13 @@ const ClientDashboard = () => {
                       </div>
                       <h3 className="text-lg font-medium text-gray-900 mb-2">No support tickets</h3>
                       <p className="text-gray-500 mb-4">You haven't created any support tickets yet</p>
-                      <button
-                        onClick={() => setIsSupportModalOpen(true)}
-                        className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition font-medium"
-                      >
+                      <button onClick={() => setIsSupportModalOpen(true)} className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition font-medium">
                         Create Support Ticket
                       </button>
                     </div>
                   )}
                 </div>
 
-                {/* FAQ Section */}
                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Frequently Asked Questions</h3>
                   <div className="space-y-4">
@@ -3068,73 +2615,30 @@ const ClientDashboard = () => {
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                 <div className="flex justify-between items-center mb-6">
                   <h2 className="text-xl font-bold text-gray-900">Company Profile</h2>
-                  <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 text-sm">
+                  <button onClick={handleEditProfile} className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 text-sm">
                     Edit Profile
                   </button>
                 </div>
-                
                 <div className="grid md:grid-cols-2 gap-8">
                   <div>
                     <h3 className="font-medium text-gray-900 mb-4 pb-2 border-b">Company Information</h3>
                     <div className="space-y-4">
-                      <div>
-                        <label className="text-sm text-gray-500">Company Name</label>
-                        <p className="font-medium text-gray-900">{companyProfile.name}</p>
-                      </div>
-                      <div>
-                        <label className="text-sm text-gray-500">Industry</label>
-                        <p className="font-medium text-gray-900">{companyProfile.industry}</p>
-                      </div>
-                      <div>
-                        <label className="text-sm text-gray-500">Company Size</label>
-                        <p className="font-medium text-gray-900">{companyProfile.size}</p>
-                      </div>
-                      <div>
-                        <label className="text-sm text-gray-500">Location</label>
-                        <p className="font-medium text-gray-900 flex items-center">
-                          <MapPin className="w-4 h-4 mr-1 text-gray-400" />
-                          {companyProfile.location}
-                        </p>
-                      </div>
-                      {companyProfile.website && (
-                        <div>
-                          <label className="text-sm text-gray-500">Website</label>
-                          <p className="font-medium text-gray-900">
-                            <a href={companyProfile.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                              {companyProfile.website}
-                            </a>
-                          </p>
-                        </div>
-                      )}
+                      <div><label className="text-sm text-gray-500">Company Name</label><p className="font-medium text-gray-900">{companyProfile.name}</p></div>
+                      <div><label className="text-sm text-gray-500">Industry</label><p className="font-medium text-gray-900">{companyProfile.industry}</p></div>
+                      <div><label className="text-sm text-gray-500">Company Size</label><p className="font-medium text-gray-900">{companyProfile.size}</p></div>
+                      <div><label className="text-sm text-gray-500">Location</label><p className="font-medium text-gray-900 flex items-center"><MapPin className="w-4 h-4 mr-1 text-gray-400" />{companyProfile.location}</p></div>
+                      {companyProfile.website && (<div><label className="text-sm text-gray-500">Website</label><p className="font-medium text-gray-900"><a href={companyProfile.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">{companyProfile.website}</a></p></div>)}
                     </div>
                   </div>
-
                   <div>
                     <h3 className="font-medium text-gray-900 mb-4 pb-2 border-b">Contact Information</h3>
                     <div className="space-y-4">
-                      <div>
-                        <label className="text-sm text-gray-500">Contact Name</label>
-                        <p className="font-medium text-gray-900">{companyProfile.contact_name || 'Not provided'}</p>
-                      </div>
-                      <div>
-                        <label className="text-sm text-gray-500">Contact Title</label>
-                        <p className="font-medium text-gray-900">{companyProfile.contact_title || 'Not provided'}</p>
-                      </div>
-                      <div>
-                        <label className="text-sm text-gray-500">Phone</label>
-                        <p className="font-medium text-gray-900">{companyProfile.phone || 'Not provided'}</p>
-                      </div>
-                      <div>
-                        <label className="text-sm text-gray-500">Email</label>
-                        <p className="font-medium text-gray-900">{user?.email}</p>
-                      </div>
+                      <div><label className="text-sm text-gray-500">Contact Name</label><p className="font-medium text-gray-900">{companyProfile.contactName || 'Not provided'}</p></div>
+                      <div><label className="text-sm text-gray-500">Contact Title</label><p className="font-medium text-gray-900">{companyProfile.contactTitle || 'Not provided'}</p></div>
+                      <div><label className="text-sm text-gray-500">Phone</label><p className="font-medium text-gray-900">{companyProfile.phone || 'Not provided'}</p></div>
+                      <div><label className="text-sm text-gray-500">Email</label><p className="font-medium text-gray-900">{user?.email}</p></div>
                     </div>
-                    {companyProfile.verified && (
-                      <div className="mt-6 flex items-center">
-                        <CheckCircle className="w-5 h-5 text-green-500 mr-2" />
-                        <span className="text-sm text-green-700">Verified Company</span>
-                      </div>
-                    )}
+                    {companyProfile.verified && (<div className="mt-6 flex items-center"><CheckCircle className="w-5 h-5 text-green-500 mr-2" /><span className="text-sm text-green-700">Verified Company</span></div>)}
                   </div>
                 </div>
               </div>
@@ -3148,39 +2652,20 @@ const ClientDashboard = () => {
                   <div>
                     <h3 className="text-lg font-medium text-gray-900 mb-4">Notification Preferences</h3>
                     <div className="space-y-3">
-                      <label className="flex items-center">
-                        <input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
-                        <span className="ml-2 text-gray-700">Email notifications for new matches</span>
-                      </label>
-                      <label className="flex items-center">
-                        <input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
-                        <span className="ml-2 text-gray-700">Email notifications for proposal updates</span>
-                      </label>
-                      <label className="flex items-center">
-                        <input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
-                        <span className="ml-2 text-gray-700">Weekly project summaries</span>
-                      </label>
+                      <label className="flex items-center"><input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" /><span className="ml-2 text-gray-700">Email notifications for new matches</span></label>
+                      <label className="flex items-center"><input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" /><span className="ml-2 text-gray-700">Email notifications for proposal updates</span></label>
+                      <label className="flex items-center"><input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" /><span className="ml-2 text-gray-700">Weekly project summaries</span></label>
                     </div>
                   </div>
-                  
                   <div>
                     <h3 className="text-lg font-medium text-gray-900 mb-4">Privacy Settings</h3>
                     <div className="space-y-3">
-                      <label className="flex items-center">
-                        <input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
-                        <span className="ml-2 text-gray-700">Show company profile to consultants</span>
-                      </label>
-                      <label className="flex items-center">
-                        <input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
-                        <span className="ml-2 text-gray-700">Share contact information with matched consultants</span>
-                      </label>
+                      <label className="flex items-center"><input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" /><span className="ml-2 text-gray-700">Show company profile to consultants</span></label>
+                      <label className="flex items-center"><input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" /><span className="ml-2 text-gray-700">Share contact information with matched consultants</span></label>
                     </div>
                   </div>
-                  
                   <div className="pt-4 border-t border-gray-200">
-                    <button className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 text-sm">
-                      Delete Account
-                    </button>
+                    <button className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 text-sm">Delete Account</button>
                   </div>
                 </div>
               </div>
@@ -3198,200 +2683,56 @@ const ClientDashboard = () => {
                   <X className="w-6 h-6 text-gray-400 hover:text-gray-600" />
                 </button>
               </div>
-              
-              {error && (
-                <div className="mx-6 mt-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-start">
-                  <AlertCircle className="w-5 h-5 mr-2 flex-shrink-0 mt-0.5" />
-                  <span className="text-sm">{error}</span>
-                </div>
-              )}
-              
+              {error && (<div className="mx-6 mt-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-start"><AlertCircle className="w-5 h-5 mr-2 flex-shrink-0 mt-0.5" /><span className="text-sm">{error}</span></div>)}
               <form onSubmit={handleSubmitRequest} className="p-6 space-y-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Position / Role *
-                  </label>
-                  <select
-                    name="position_id"
-                    value={newRequest.position_id}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-                    required
-                  >
+                <div><label className="block text-sm font-medium text-gray-700 mb-2">Position / Role *</label>
+                  <select name="position" value={newRequest.position} onChange={handleInputChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent" required>
                     <option value="">Select a position</option>
-                    {positions.map(pos => (
-                      <option key={pos.id} value={pos.id}>{pos.name}</option>
-                    ))}
+                    {positions.map(pos => (<option key={pos._id} value={pos.name}>{pos.name}</option>))}
                   </select>
                 </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Project Title *
-                  </label>
-                  <input
-                    type="text"
-                    name="title"
-                    value={newRequest.title}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-                    placeholder="e.g., AI Strategy Implementation"
-                    required
-                  />
+                <div><label className="block text-sm font-medium text-gray-700 mb-2">Project Title *</label>
+                  <input type="text" name="title" value={newRequest.title} onChange={handleInputChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent" placeholder="e.g., AI Strategy Implementation" required />
                 </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Project Description *
-                  </label>
-                  <textarea
-                    name="description"
-                    value={newRequest.description}
-                    onChange={handleInputChange}
-                    rows={4}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-                    placeholder="Describe your project requirements, goals, and expectations..."
-                    required
-                  />
+                <div><label className="block text-sm font-medium text-gray-700 mb-2">Project Description *</label>
+                  <textarea name="description" value={newRequest.description} onChange={handleInputChange} rows={4} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent" placeholder="Describe your project requirements, goals, and expectations..." required />
                 </div>
-
                 <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Start Date
-                    </label>
-                    <input
-                      type="date"
-                      name="start_date"
-                      value={newRequest.start_date}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-                    />
+                  <div><label className="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
+                    <input type="date" name="startDate" value={newRequest.startDate} onChange={handleInputChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent" />
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      End Date
-                    </label>
-                    <input
-                      type="date"
-                      name="end_date"
-                      value={newRequest.end_date}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-                    />
+                  <div><label className="block text-sm font-medium text-gray-700 mb-2">End Date</label>
+                    <input type="date" name="endDate" value={newRequest.endDate} onChange={handleInputChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent" />
                   </div>
                 </div>
-
                 <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Budget Type
-                    </label>
-                    <select
-                      name="budget_type"
-                      value={newRequest.budget_type}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-                    >
-                      <option value="daily">Daily Rate</option>
-                      <option value="hourly">Hourly Rate</option>
-                      <option value="fixed">Fixed Price</option>
+                  <div><label className="block text-sm font-medium text-gray-700 mb-2">Budget Type</label>
+                    <select name="budgetType" value={newRequest.budgetType} onChange={handleInputChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent">
+                      <option value="daily">Daily Rate</option><option value="hourly">Hourly Rate</option><option value="fixed">Fixed Price</option>
                     </select>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Budget Amount *
-                    </label>
-                    <div className="flex">
-                      <select
-                        name="currency"
-                        value={newRequest.currency}
-                        onChange={handleInputChange}
-                        className="w-24 px-4 py-2 border border-r-0 border-gray-300 rounded-l-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-                      >
-                        <option value="EUR">€</option>
-                        <option value="USD">$</option>
-                        <option value="GBP">£</option>
-                      </select>
-                      <input
-                        type="number"
-                        name="budget_amount"
-                        value={newRequest.budget_amount}
-                        onChange={handleInputChange}
-                        className="flex-1 px-4 py-2 border border-gray-300 rounded-r-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-                        placeholder="Amount"
-                        required
-                      />
-                    </div>
+                  <div><label className="block text-sm font-medium text-gray-700 mb-2">Budget Amount *</label>
+                    <div className="flex"><select name="currency" value={newRequest.currency} onChange={handleInputChange} className="w-24 px-4 py-2 border border-r-0 border-gray-300 rounded-l-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"><option value="EUR">€</option><option value="USD">$</option><option value="GBP">£</option></select>
+                    <input type="number" name="budgetAmount" value={newRequest.budgetAmount} onChange={handleInputChange} className="flex-1 px-4 py-2 border border-gray-300 rounded-r-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent" placeholder="Amount" required /></div>
                   </div>
                 </div>
-
                 <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Work Mode
-                    </label>
-                    <select
-                      name="work_mode"
-                      value={newRequest.work_mode}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-                    >
-                      <option value="remote">Remote</option>
-                      <option value="on-site">On-site</option>
-                      <option value="hybrid">Hybrid</option>
+                  <div><label className="block text-sm font-medium text-gray-700 mb-2">Work Mode</label>
+                    <select name="workMode" value={newRequest.workMode} onChange={handleInputChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent">
+                      <option value="remote">Remote</option><option value="on-site">On-site</option><option value="hybrid">Hybrid</option>
                     </select>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Country
-                    </label>
-                    <input
-                      type="text"
-                      name="work_country"
-                      value={newRequest.work_country}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-                      placeholder="e.g., Germany"
-                    />
+                  <div><label className="block text-sm font-medium text-gray-700 mb-2">Country</label>
+                    <input type="text" name="workCountry" value={newRequest.workCountry} onChange={handleInputChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent" placeholder="e.g., Germany" />
                   </div>
                 </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    City
-                  </label>
-                  <input
-                    type="text"
-                    name="work_city"
-                    value={newRequest.work_city}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-                    placeholder="e.g., Berlin"
-                  />
+                <div><label className="block text-sm font-medium text-gray-700 mb-2">City</label>
+                  <input type="text" name="workCity" value={newRequest.workCity} onChange={handleInputChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent" placeholder="e.g., Berlin" />
                 </div>
-
                 <div className="flex justify-end space-x-4 pt-4 border-t">
-                  <button
-                    type="button"
-                    onClick={() => setShowNewRequestModal(false)}
-                    className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center"
-                  >
-                    {loading ? (
-                      <>
-                        <Loader className="w-4 h-4 animate-spin mr-2" />
-                        Submitting...
-                      </>
-                    ) : (
-                      'Submit Request'
-                    )}
+                  <button type="button" onClick={() => setShowNewRequestModal(false)} className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">Cancel</button>
+                  <button type="submit" disabled={loading} className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center">
+                    {loading ? (<><Loader className="w-4 h-4 animate-spin mr-2" />Submitting...</>) : 'Submit Request'}
                   </button>
                 </div>
               </form>

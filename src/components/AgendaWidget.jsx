@@ -11,33 +11,47 @@ const AgendaWidget = ({ userId, userType, BACKEND_URL, compact = false }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const fetchAgenda = async () => {
-    try {
-      setLoading(true);
-      const token = localStorage.getItem('auth_token');
-      const response = await fetch(
-        `${BACKEND_URL}/api/agenda/${userType}/${userId}`,
-        {
-          headers: {
-            'Authorization': token ? `Bearer ${token}` : '',
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-      
-      const data = await response.json();
-      if (data.success) {
-        setAgenda(data.agenda);
-      } else {
-        setError(data.error || 'Failed to load agenda');
-      }
-    } catch (err) {
-      console.error('Error fetching agenda:', err);
-      setError('Network error');
-    } finally {
-      setLoading(false);
+// src/components/AgendaWidget.jsx - Update the fetchAgenda function
+
+const fetchAgenda = async () => {
+  try {
+    setLoading(true);
+    const token = localStorage.getItem('auth_token');
+    
+    // Determine the email to use
+    let email = userId;
+    // If userId is an email, use it directly
+    if (userId.includes('@')) {
+      email = userId;
+    } else {
+      // If userId is an ID, we need to fetch the email or use a different approach
+      // For now, assume userId is email for simplicity
+      console.warn('AgendaWidget: userId is not an email, may need to fetch user data');
     }
-  };
+    
+    const response = await fetch(
+      `${BACKEND_URL}/api/agenda/${encodeURIComponent(email)}`,
+      {
+        headers: {
+          'Authorization': token ? `Bearer ${token}` : '',
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+    
+    const data = await response.json();
+    if (data.success) {
+      setAgenda(data.agenda);
+    } else {
+      setError(data.error || 'Failed to load agenda');
+    }
+  } catch (err) {
+    console.error('Error fetching agenda:', err);
+    setError('Network error');
+  } finally {
+    setLoading(false);
+  }
+};
 
   useEffect(() => {
     if (userId) {

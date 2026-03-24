@@ -29,14 +29,17 @@
 //   Mail,
 //   Phone,
 //   LifeBuoy,
-//   Ticket
+//   Ticket,
+//   Grid,
+//   List,
+ 
 // } from 'lucide-react';
 // import { useAuth } from '../../context/AuthContext';
 // import { useNavigate } from 'react-router-dom';
 // import ContactSupportModal from '../../components/modals/ContactSupportModal';
 // import AvailabilityCalendar from '../../components/AvailabilityCalendar';
 // import AgendaWidget from '../../components/AgendaWidget';
-
+// import ProfileCompletionBanner from '../../components/ProfileCompletionBanner';
 // // Error Boundary Component
 // class ErrorBoundary extends React.Component {
 //   constructor(props) {
@@ -72,7 +75,6 @@
 //         </div>
 //       );
 //     }
-
 //     return this.props.children;
 //   }
 // }
@@ -145,13 +147,12 @@
 // };
 
 // // Ticket Details Modal
-// const TicketDetailsModal = ({ ticket, onClose, onReply, BACKEND_URL }) => {
+// const TicketDetailsModal = ({ ticket, onClose, onReply }) => {
 //   const [replyMessage, setReplyMessage] = useState('');
 //   const [submitting, setSubmitting] = useState(false);
 
 //   const handleSubmitReply = async () => {
 //     if (!replyMessage.trim()) return;
-    
 //     setSubmitting(true);
 //     await onReply(ticket._id, replyMessage);
 //     setReplyMessage('');
@@ -191,7 +192,6 @@
 //           </div>
           
 //           <div className="p-6">
-//             {/* Ticket Header */}
 //             <div className="mb-6">
 //               <div className="flex items-center space-x-2 mb-3">
 //                 <span className={`px-3 py-1 text-sm rounded-full ${getPriorityColor(ticket.priority)}`}>
@@ -205,7 +205,6 @@
 //               <p className="text-sm text-gray-600">Created on {new Date(ticket.createdAt).toLocaleString()}</p>
 //             </div>
 
-//             {/* Original Message */}
 //             <div className="mb-6 p-4 bg-gray-50 rounded-lg">
 //               <div className="flex items-center justify-between mb-2">
 //                 <span className="font-medium text-gray-900">Your Message</span>
@@ -214,7 +213,6 @@
 //               <p className="text-gray-700 whitespace-pre-wrap">{ticket.message}</p>
 //             </div>
 
-//             {/* Replies */}
 //             {ticket.replies && ticket.replies.length > 0 && (
 //               <div className="mb-6">
 //                 <h4 className="font-medium text-gray-900 mb-4">Conversation</h4>
@@ -238,7 +236,6 @@
 //               </div>
 //             )}
 
-//             {/* Reply Form */}
 //             {ticket.status !== 'closed' && ticket.status !== 'resolved' && (
 //               <div className="border-t border-gray-200 pt-6">
 //                 <h4 className="font-medium text-gray-900 mb-3">Add Reply</h4>
@@ -289,7 +286,9 @@
 //   const [supportTickets, setSupportTickets] = useState([]);
 //   const [supportLoading, setSupportLoading] = useState(false);
 //   const [availabilityData, setAvailabilityData] = useState({});
-  
+//   const [calendarView, setCalendarView] = useState('full');
+//   const [showProfileModal, setShowProfileModal] = useState(false);
+// const [modalStep, setModalStep] = useState('basic')
 //   const [dashboardData, setDashboardData] = useState({
 //     profile: null,
 //     matches: [],
@@ -301,46 +300,39 @@
 //     }
 //   });
 
-//   // Debug: Log profile completion on mount
-//   useEffect(() => {
-//     console.log('🔍 Dashboard mounted');
-//     console.log('User:', user);
-//     console.log('Profile Completion from context:', profileCompletion);
-//     console.log('localStorage:', {
-//       profile_setup_complete: localStorage.getItem('profile_setup_complete'),
-//       subscription_complete: localStorage.getItem('subscription_complete'),
-//       profile_completion: localStorage.getItem('profile_completion')
-//     });
-
-//     // Check if we should be here based on profile completion
-//     const basicComplete = profileCompletion.basicInfo || localStorage.getItem('profile_setup_complete') === 'basic' || localStorage.getItem('profile_setup_complete') === 'availability';
-//     const availabilityComplete = profileCompletion.availability || localStorage.getItem('profile_setup_complete') === 'availability';
-//     const paymentComplete = profileCompletion.payment || localStorage.getItem('subscription_complete') === 'true';
-
-//     console.log('Completion check:', { basicComplete, availabilityComplete, paymentComplete });
-
-//     if (!basicComplete) {
-//       console.log('⚠️ Basic info not complete, redirecting to profile setup');
-//       navigate('/consultant/profile-setup?step=basic');
-//     } else if (!availabilityComplete) {
-//       console.log('⚠️ Availability not complete, redirecting to availability setup');
-//       navigate('/consultant/profile-setup?step=availability');
-//     } else if (!paymentComplete) {
-//       console.log('⚠️ Payment not complete, redirecting to subscription');
-//       navigate('/consultant/subscription');
-//     } else {
-//       console.log('✅ All checks passed, loading dashboard');
-//     }
-//   }, [user, profileCompletion, navigate]);
+//   // Check if profile is complete - if not, redirect to setup
+//   // useEffect(() => {
+//   //   if (user && !profileCompletion?.basicInfo) {
+//   //     navigate('/consultant/profile-setup?step=basic');
+//   //   } else if (user && !profileCompletion?.availability) {
+//   //     navigate('/consultant/profile-setup?step=availability');
+//   //   } else if (user && !profileCompletion?.payment) {
+//   //     navigate('/consultant/subscription');
+//   //   }
+//   // }, [user, profileCompletion, navigate]);
 
 //   // Fetch support tickets
+
+//   useEffect(() => {
+//   // If profile is incomplete, show the modal after a short delay
+//   if (user && profileCompletion.status !== 'complete') {
+//     // Small delay to let dashboard load first
+//     const timer = setTimeout(() => {
+//       setShowProfileModal(true);
+//     }, 1000);
+//     return () => clearTimeout(timer);
+//   }
+// }, [user, profileCompletion]);
+
+
+
 //   const fetchSupportTickets = async () => {
 //     if (!user?.email) return;
     
 //     try {
 //       setSupportLoading(true);
 //       const token = localStorage.getItem('auth_token');
-//       const response = await fetch(`${BACKEND_URL}/api/user/support-requests/${encodeURIComponent(user.email)}`, {
+//       const response = await fetch(`${BACKEND_URL}/api/support/user/${encodeURIComponent(user.email)}`, {
 //         headers: {
 //           'Authorization': token ? `Bearer ${token}` : '',
 //           'Content-Type': 'application/json'
@@ -361,10 +353,9 @@
 //   // Fetch ticket details
 //   const fetchTicketDetails = async (ticket) => {
 //     try {
-//       setLoading(true);
 //       const token = localStorage.getItem('auth_token');
 //       const response = await fetch(
-//         `${BACKEND_URL}/api/user/support-requests/${encodeURIComponent(user.email)}/${ticket.ticketId}`,
+//         `${BACKEND_URL}/api/support/ticket/${ticket.ticketId}?email=${encodeURIComponent(user.email)}`,
 //         {
 //           headers: {
 //             'Authorization': token ? `Bearer ${token}` : '',
@@ -382,8 +373,6 @@
 //       }
 //     } catch (err) {
 //       console.error('Error fetching ticket details:', err);
-//     } finally {
-//       setLoading(false);
 //     }
 //   };
 
@@ -402,11 +391,9 @@
       
 //       const data = await response.json();
 //       if (data.success) {
-//         // Refresh ticket details
 //         if (selectedTicket) {
 //           await fetchTicketDetails(selectedTicket);
 //         }
-//         // Refresh tickets list
 //         await fetchSupportTickets();
 //       }
 //     } catch (err) {
@@ -417,15 +404,13 @@
 //   // Handle availability change
 //   const handleAvailabilityChange = (date, status, timeRange) => {
 //     console.log('Availability updated:', { date, status, timeRange });
-//     // You can add additional logic here if needed
-//     // For example, update local state or trigger other actions
 //     setAvailabilityData(prev => ({
 //       ...prev,
-//       [date.toISOString().split('T')[0]]: { status, timeRange }
+//       [date]: { status, timeRange }
 //     }));
 //   };
 
-//   // Fetch real dashboard data from backend
+//   // Fetch dashboard data using unified endpoint
 //   useEffect(() => {
 //     const fetchDashboardData = async () => {
 //       if (!user?.email) {
@@ -440,7 +425,7 @@
 //         const token = localStorage.getItem('auth_token');
 //         console.log('Fetching dashboard data for:', user.email);
         
-//         const response = await fetch(`${BACKEND_URL}/api/user/dashboard/${encodeURIComponent(user.email)}`, {
+//         const response = await fetch(`${BACKEND_URL}/api/dashboard/${encodeURIComponent(user.email)}`, {
 //           headers: {
 //             'Authorization': token ? `Bearer ${token}` : '',
 //             'Content-Type': 'application/json'
@@ -455,27 +440,24 @@
 //         console.log('Dashboard data received:', result);
 
 //         if (result.success && result.data) {
-//           // Safely extract data with fallbacks
 //           const profile = result.data.profile || {};
-//           const matches = Array.isArray(result.data.matches) ? result.data.matches : [];
+//           const matches = Array.isArray(result.data.recentMatches) ? result.data.recentMatches : [];
           
 //           setDashboardData({
 //             profile: profile,
 //             matches: matches,
 //             stats: {
-//               profileViews: profile.profile_views || 0,
+//               profileViews: profile.profileViews || 0,
 //               matchRequests: matches.length || 0,
-//               interviews: matches.filter(m => m?.admin_review_status === 'interview_scheduled').length || 0,
-//               earnings: profile.earnings_ytd || 0
+//               interviews: matches.filter(m => m?.status === 'interview_scheduled' || m?.adminReviewStatus === 'interview_scheduled').length || 0,
+//               earnings: profile.earningsYtd || 0
 //             }
 //           });
 
-//           // Load availability data if exists
-//           if (profile.availability) {
-//             setAvailabilityData(profile.availability);
+//           if (result.data.availability) {
+//             setAvailabilityData(result.data.availability);
 //           }
 
-//           // Fetch support tickets after dashboard data
 //           await fetchSupportTickets();
 //         } else {
 //           setError(result.error || 'Failed to load dashboard data');
@@ -488,32 +470,41 @@
 //       }
 //     };
 
-//     // Only fetch if user exists and completion checks pass
 //     if (user?.email) {
 //       fetchDashboardData();
 //     }
 //   }, [user, BACKEND_URL]);
 
+
+//   const handleProfileComplete = (step) => {
+//   if (step === 'payment') {
+//     updateProfileCompletion('payment', true);
+//   }
+//   setShowProfileModal(false);
+//   // Refresh dashboard data
+//   fetchDashboardData();
+// };
+
 //   // Safe data access with fallbacks
 //   const profile = dashboardData.profile ? {
-//     name: dashboardData.profile.full_name || user?.name || 'Consultant',
+//     name: dashboardData.profile.fullName || user?.name || 'Consultant',
 //     title: dashboardData.profile.title || 'Senior Consultant',
-//     location: dashboardData.profile.base_city && dashboardData.profile.base_country 
-//       ? `${dashboardData.profile.base_city}, ${dashboardData.profile.base_country}`
+//     location: dashboardData.profile.baseCity && dashboardData.profile.baseCountry 
+//       ? `${dashboardData.profile.baseCity}, ${dashboardData.profile.baseCountry}`
 //       : 'Location not set',
 //     availability: dashboardData.profile.availability || 'Availability not set',
 //     rating: dashboardData.profile.rating || 0,
-//     completedProjects: dashboardData.profile.completed_projects || 0,
-//     hourlyRate: dashboardData.profile.hourly_rate 
-//       ? `€${dashboardData.profile.hourly_rate}` 
+//     completedProjects: dashboardData.profile.completedProjects || 0,
+//     hourlyRate: dashboardData.profile.hourlyRate 
+//       ? `€${dashboardData.profile.hourlyRate}` 
 //       : 'Rate not set',
 //     expertise: Array.isArray(dashboardData.profile.positions) 
 //       ? dashboardData.profile.positions 
 //       : (typeof dashboardData.profile.positions === 'string' 
 //           ? dashboardData.profile.positions.split(',').map(s => s.trim()) 
 //           : []),
-//     verified: dashboardData.profile.is_verified || false,
-//     subscription_status: dashboardData.profile.subscription_status || 'inactive'
+//     verified: dashboardData.profile.isVerified || false,
+//     subscriptionStatus: dashboardData.profile.subscriptionStatus || 'inactive'
 //   } : {
 //     name: user?.name || 'Consultant',
 //     title: 'Consultant',
@@ -524,22 +515,20 @@
 //     hourlyRate: 'Rate not set',
 //     expertise: [],
 //     verified: false,
-//     subscription_status: 'inactive'
+//     subscriptionStatus: 'inactive'
 //   };
 
-//   // Safe matches array
 //   const activeMatches = Array.isArray(dashboardData.matches) 
 //     ? dashboardData.matches.map(match => ({
-//         id: match?.id || Math.random(),
-//         client: match?.company_name || 'Client',
-//         project: match?.request_title || 'Project',
+//         id: match?._id || match?.id || Math.random(),
+//         client: match?.companyName || match?.clientName || 'Client',
+//         project: match?.requestTitle || match?.title || 'Project',
 //         duration: match?.duration || 'Duration TBD',
-//         startDate: match?.start_date || new Date().toISOString().split('T')[0],
-//         status: match?.admin_review_status || 'pending'
+//         startDate: match?.startDate || new Date().toISOString().split('T')[0],
+//         status: match?.adminReviewStatus || match?.status || 'suggested'
 //       }))
 //     : [];
 
-//   // Stats with safe values
 //   const stats = [
 //     { 
 //       label: 'Profile Views', 
@@ -569,20 +558,33 @@
 
 //   const getStatusColor = (status) => {
 //     switch(status) {
-//       case 'pending': return 'bg-yellow-100 text-yellow-800';
-//       case 'interview_scheduled': return 'bg-blue-100 text-blue-800';
-//       case 'accepted': return 'bg-green-100 text-green-800';
-//       case 'rejected': return 'bg-red-100 text-red-800';
-//       default: return 'bg-gray-100 text-gray-800';
+//       case 'pending':
+//       case 'suggested':
+//         return 'bg-yellow-100 text-yellow-800';
+//       case 'interview_scheduled':
+//       case 'contacted':
+//         return 'bg-blue-100 text-blue-800';
+//       case 'accepted':
+//       case 'shortlisted':
+//         return 'bg-green-100 text-green-800';
+//       case 'rejected':
+//       case 'unavailable':
+//         return 'bg-red-100 text-red-800';
+//       default:
+//         return 'bg-gray-100 text-gray-800';
 //     }
 //   };
 
 //   const getStatusText = (status) => {
 //     switch(status) {
-//       case 'pending': return 'Pending Acceptance';
+//       case 'suggested': return 'Suggested Match';
+//       case 'pending': return 'Pending';
+//       case 'contacted': return 'Contacted';
 //       case 'interview_scheduled': return 'Interview Scheduled';
+//       case 'shortlisted': return 'Shortlisted';
 //       case 'accepted': return 'Accepted';
 //       case 'rejected': return 'Declined';
+//       case 'unavailable': return 'Unavailable';
 //       default: return status?.replace('_', ' ') || 'Unknown';
 //     }
 //   };
@@ -592,7 +594,6 @@
 //   };
 
 //   const handleViewMatch = (matchId) => {
-//     // Navigate to match details
 //     console.log('View match:', matchId);
 //   };
 
@@ -607,7 +608,7 @@
 //     );
 //   }
 
-//   if (error) {
+//   if (error && !dashboardData.profile) {
 //     return (
 //       <div className="min-h-screen flex items-center justify-center bg-gray-50">
 //         <div className="text-center max-w-md p-8">
@@ -642,14 +643,13 @@
 //             ticket={selectedTicket}
 //             onClose={() => setSelectedTicket(null)}
 //             onReply={handleSubmitReply}
-//             BACKEND_URL={BACKEND_URL}
 //           />
 //         )}
 
 //         {/* Mobile Sidebar Overlay */}
 //         {sidebarOpen && (
 //           <div 
-//             className="fixed inset-0 bg-gray-600 bg-opacity-10 z-20 lg:hidden"
+//             className="fixed inset-0 bg-gray-600 bg-opacity-50 z-20 lg:hidden"
 //             onClick={() => setSidebarOpen(false)}
 //           />
 //         )}
@@ -661,7 +661,7 @@
 //             <div className="px-4 py-6 border-b border-blue-700">
 //               <div className="flex items-center space-x-3">
 //                 <div className="rounded-lg">
-//                   <img src="/logo.png" alt="Logo" className="h-20 object-contain" />
+//                   <img src="/logo.png" alt="Logo" className="h-12 object-contain" />
 //                 </div>
 //                 <div>
 //                   <h2 className="font-bold text-lg">Consultant Panel</h2>
@@ -687,9 +687,9 @@
 //                   )}
 //                 </div>
 //               </div>
-//               {profile.subscription_status !== 'active' && (
+//               {profile.subscriptionStatus !== 'active' && (
 //                 <div className="mt-3 bg-yellow-500/20 text-yellow-200 text-xs p-2 rounded-lg">
-//                   Subscription {profile.subscription_status}
+//                   Subscription {profile.subscriptionStatus}
 //                 </div>
 //               )}
 //             </div>
@@ -698,6 +698,7 @@
 //             <nav className="flex-1 px-2 py-4 space-y-1">
 //               {[
 //                 { id: 'overview', label: 'Overview', icon: <TrendingUp className="w-5 h-5" /> },
+//                 { id: 'calendar', label: 'Calendar & Agenda', icon: <Calendar className="w-5 h-5" /> },
 //                 { id: 'matches', label: 'My Matches', icon: <LinkIcon className="w-5 h-5" /> },
 //                 { id: 'projects', label: 'Projects', icon: <Briefcase className="w-5 h-5" /> },
 //                 { id: 'messages', label: 'Messages', icon: <MessageSquare className="w-5 h-5" /> },
@@ -770,6 +771,7 @@
 
 //           {/* Page Content */}
 //           <main className="p-4 sm:p-6 lg:p-8">
+//               <ProfileCompletionBanner profileCompletion={profileCompletion} />
 //             {activeTab === 'overview' && (
 //               <>
 //                 {/* Welcome Header */}
@@ -794,7 +796,35 @@
 //                   ))}
 //                 </div>
 
-//                 {/* Profile Completion - Only show if profile incomplete */}
+//                 {/* Quick Calendar Preview */}
+//                 <div className="mb-8 bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+//                   <div className="flex justify-between items-center mb-4">
+//                     <h2 className="text-lg font-semibold text-gray-900">Quick Schedule View</h2>
+//                     <button 
+//                       onClick={() => setActiveTab('calendar')}
+//                       className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+//                     >
+//                       View Full Calendar →
+//                     </button>
+//                   </div>
+//                   <div className="grid lg:grid-cols-2 gap-6">
+//                     <AvailabilityCalendar
+//                       userId={user?.email}
+//                       userType="consultant"
+//                       BACKEND_URL={BACKEND_URL}
+//                       onAvailabilityChange={handleAvailabilityChange}
+//                       compact={true}
+//                     />
+//                     <AgendaWidget
+//                       userId={user?.email}
+//                       userType="consultant"
+//                       BACKEND_URL={BACKEND_URL}
+//                       compact={true}
+//                     />
+//                   </div>
+//                 </div>
+
+//                 {/* Profile Completion Banner (if needed) */}
 //                 {!dashboardData.profile && (
 //                   <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
 //                     <h2 className="text-lg font-semibold text-gray-900 mb-4">Complete Your Profile</h2>
@@ -813,24 +843,6 @@
 //                   </div>
 //                 )}
 
-//                 {/* Availability Calendar and Agenda Widget */}
-//                 <div className="grid lg:grid-cols-2 gap-6 mb-8">
-//                   {/* Availability Calendar */}
-//                   <AvailabilityCalendar
-//                     userId={user?.email}
-//                     userType="consultant"
-//                     BACKEND_URL={BACKEND_URL}
-//                     onAvailabilityChange={handleAvailabilityChange}
-//                   />
-                  
-//                   {/* Agenda Widget */}
-//                   <AgendaWidget
-//                     userId={user?.email}
-//                     userType="consultant"
-//                     BACKEND_URL={BACKEND_URL}
-//                   />
-//                 </div>
-
 //                 {/* Two Column Layout */}
 //                 <div className="grid lg:grid-cols-2 gap-6">
 //                   {/* Active Matches */}
@@ -847,8 +859,11 @@
 //                     <div className="p-6">
 //                       {activeMatches.length > 0 ? (
 //                         activeMatches.slice(0, 3).map((match) => (
-//                           <div key={match.id} className="mb-4 last:mb-0 p-4 bg-gray-50 rounded-lg hover:shadow-md transition cursor-pointer"
-//                                onClick={() => handleViewMatch(match.id)}>
+//                           <div 
+//                             key={match.id} 
+//                             className="mb-4 last:mb-0 p-4 bg-gray-50 rounded-lg hover:shadow-md transition cursor-pointer"
+//                             onClick={() => handleViewMatch(match.id)}
+//                           >
 //                             <div className="flex justify-between items-start mb-2">
 //                               <h3 className="font-medium text-gray-900">{match.client}</h3>
 //                               <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(match.status)}`}>
@@ -937,6 +952,88 @@
 //               </>
 //             )}
 
+//             {/* Calendar & Agenda Tab */}
+//             {activeTab === 'calendar' && (
+//               <div className="space-y-6">
+//                 <div className="flex justify-between items-center">
+//                   <div>
+//                     <h1 className="text-2xl font-bold text-gray-900">Calendar & Agenda</h1>
+//                     <p className="text-gray-600 mt-1">Manage your availability and view upcoming engagements</p>
+//                   </div>
+//                   <div className="flex items-center space-x-2">
+//                     <button
+//                       onClick={() => setCalendarView('full')}
+//                       className={`p-2 rounded-lg transition ${calendarView === 'full' ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+//                       title="Full View"
+//                     >
+//                       <Grid className="w-5 h-5" />
+//                     </button>
+//                     <button
+//                       onClick={() => setCalendarView('compact')}
+//                       className={`p-2 rounded-lg transition ${calendarView === 'compact' ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+//                       title="Compact View"
+//                     >
+//                       <List className="w-5 h-5" />
+//                     </button>
+//                   </div>
+//                 </div>
+
+//                 <div className={`grid ${calendarView === 'full' ? 'lg:grid-cols-3' : 'lg:grid-cols-2'} gap-6`}>
+//                   <div className={calendarView === 'full' ? 'lg:col-span-2' : 'lg:col-span-1'}>
+//                     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+//                       <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+//                         <Calendar className="w-5 h-5 mr-2 text-blue-600" />
+//                         Availability Calendar
+//                       </h2>
+//                       <p className="text-sm text-gray-500 mb-4">
+//                         Click on any date to mark your availability. Green dates show when you're available for new projects.
+//                       </p>
+//                       <AvailabilityCalendar
+//                         userId={user?.email}
+//                         userType="consultant"
+//                         BACKEND_URL={BACKEND_URL}
+//                         onAvailabilityChange={handleAvailabilityChange}
+//                         compact={calendarView === 'compact'}
+//                       />
+//                     </div>
+//                   </div>
+
+//                   <div className={calendarView === 'full' ? 'lg:col-span-1' : 'lg:col-span-1'}>
+//                     <AgendaWidget
+//                       userId={user?.email}
+//                       userType="consultant"
+//                       BACKEND_URL={BACKEND_URL}
+//                       compact={calendarView === 'compact'}
+//                     />
+//                   </div>
+//                 </div>
+
+//                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+//                   <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+//                     <Clock className="w-5 h-5 mr-2 text-orange-600" />
+//                     Upcoming Deadlines
+//                   </h2>
+//                   <div className="text-center py-8 text-gray-500">
+//                     <p>No upcoming deadlines</p>
+//                     <p className="text-sm mt-1">Deadlines from your active projects will appear here</p>
+//                   </div>
+//                 </div>
+
+//                 <div className="bg-blue-50 rounded-xl border border-blue-200 p-6">
+//                   <h3 className="font-semibold text-blue-900 mb-2 flex items-center">
+//                     <HelpCircle className="w-5 h-5 mr-2" />
+//                     Availability Tips
+//                   </h3>
+//                   <ul className="text-sm text-blue-800 space-y-1">
+//                     <li>• Mark your availability at least 2 weeks in advance to get better matches</li>
+//                     <li>• Update your calendar regularly to reflect your current availability</li>
+//                     <li>• Set specific time ranges to help clients schedule meetings</li>
+//                     <li>• Mark days as "Busy" when you're on active projects</li>
+//                   </ul>
+//                 </div>
+//               </div>
+//             )}
+
 //             {/* Profile Tab */}
 //             {activeTab === 'profile' && (
 //               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
@@ -954,70 +1051,25 @@
 //                   <div>
 //                     <h3 className="font-medium text-gray-900 mb-4 pb-2 border-b">Personal Information</h3>
 //                     <div className="space-y-4">
-//                       <div>
-//                         <label className="text-sm text-gray-500">Full Name</label>
-//                         <p className="font-medium text-gray-900">{profile.name}</p>
-//                       </div>
-//                       <div>
-//                         <label className="text-sm text-gray-500">Professional Title</label>
-//                         <p className="font-medium text-gray-900">{profile.title}</p>
-//                       </div>
-//                       <div>
-//                         <label className="text-sm text-gray-500">Location</label>
-//                         <p className="font-medium text-gray-900 flex items-center">
-//                           <MapPin className="w-4 h-4 mr-1 text-gray-400" />
-//                           {profile.location}
-//                         </p>
-//                       </div>
-//                       <div>
-//                         <label className="text-sm text-gray-500">Email</label>
-//                         <p className="font-medium text-gray-900">{user?.email || 'Not provided'}</p>
-//                       </div>
+//                       <div><label className="text-sm text-gray-500">Full Name</label><p className="font-medium text-gray-900">{profile.name}</p></div>
+//                       <div><label className="text-sm text-gray-500">Professional Title</label><p className="font-medium text-gray-900">{profile.title}</p></div>
+//                       <div><label className="text-sm text-gray-500">Location</label><p className="font-medium text-gray-900 flex items-center"><MapPin className="w-4 h-4 mr-1 text-gray-400" />{profile.location}</p></div>
+//                       <div><label className="text-sm text-gray-500">Email</label><p className="font-medium text-gray-900">{user?.email || 'Not provided'}</p></div>
 //                     </div>
 //                   </div>
 
 //                   <div>
 //                     <h3 className="font-medium text-gray-900 mb-4 pb-2 border-b">Professional Details</h3>
 //                     <div className="space-y-4">
-//                       <div>
-//                         <label className="text-sm text-gray-500">Hourly Rate</label>
-//                         <p className="font-medium text-gray-900">{profile.hourlyRate}</p>
-//                       </div>
-//                       <div>
-//                         <label className="text-sm text-gray-500">Completed Projects</label>
-//                         <p className="font-medium text-gray-900">{profile.completedProjects}</p>
-//                       </div>
-//                       <div>
-//                         <label className="text-sm text-gray-500">Availability</label>
-//                         <p className="font-medium text-gray-900 flex items-center">
-//                           <Calendar className="w-4 h-4 mr-1 text-gray-400" />
-//                           {profile.availability}
-//                         </p>
-//                       </div>
+//                       <div><label className="text-sm text-gray-500">Hourly Rate</label><p className="font-medium text-gray-900">{profile.hourlyRate}</p></div>
+//                       <div><label className="text-sm text-gray-500">Completed Projects</label><p className="font-medium text-gray-900">{profile.completedProjects}</p></div>
+//                       <div><label className="text-sm text-gray-500">Availability</label><p className="font-medium text-gray-900 flex items-center"><Calendar className="w-4 h-4 mr-1 text-gray-400" />{profile.availability}</p></div>
 //                       {profile.expertise.length > 0 && (
-//                         <div>
-//                           <label className="text-sm text-gray-500">Expertise</label>
-//                           <div className="flex flex-wrap gap-2 mt-2">
-//                             {profile.expertise.map((skill, index) => (
-//                               <span key={index} className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm">
-//                                 {skill}
-//                               </span>
-//                             ))}
-//                           </div>
-//                         </div>
+//                         <div><label className="text-sm text-gray-500">Expertise</label><div className="flex flex-wrap gap-2 mt-2">{profile.expertise.map((skill, index) => (<span key={index} className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm">{skill}</span>))}</div></div>
 //                       )}
 //                       <div className="flex items-center pt-2">
-//                         {profile.verified && (
-//                           <>
-//                             <CheckCircle className="w-5 h-5 text-green-500 mr-2" />
-//                             <span className="text-sm text-green-700">Verified Consultant</span>
-//                           </>
-//                         )}
-//                         {profile.subscription_status === 'active' && (
-//                           <span className="ml-4 px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs">
-//                             Subscription Active
-//                           </span>
-//                         )}
+//                         {profile.verified && (<><CheckCircle className="w-5 h-5 text-green-500 mr-2" /><span className="text-sm text-green-700">Verified Consultant</span></>)}
+//                         {profile.subscriptionStatus === 'active' && (<span className="ml-4 px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs">Subscription Active</span>)}
 //                       </div>
 //                     </div>
 //                   </div>
@@ -1029,137 +1081,31 @@
 //             {activeTab === 'matches' && (
 //               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
 //                 <h2 className="text-xl font-bold text-gray-900 mb-6">My Matches</h2>
-                
 //                 {activeMatches.length > 0 ? (
 //                   <div className="space-y-4">
 //                     {activeMatches.map((match) => (
 //                       <div key={match.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition">
 //                         <div className="flex justify-between items-start mb-3">
-//                           <div>
-//                             <h3 className="font-semibold text-gray-900">{match.client}</h3>
-//                             <p className="text-gray-600">{match.project}</p>
-//                           </div>
-//                           <span className={`px-3 py-1 text-xs rounded-full ${getStatusColor(match.status)}`}>
-//                             {getStatusText(match.status)}
-//                           </span>
+//                           <div><h3 className="font-semibold text-gray-900">{match.client}</h3><p className="text-gray-600">{match.project}</p></div>
+//                           <span className={`px-3 py-1 text-xs rounded-full ${getStatusColor(match.status)}`}>{getStatusText(match.status)}</span>
 //                         </div>
 //                         <div className="flex items-center justify-between text-sm">
 //                           <div className="flex items-center space-x-4 text-gray-500">
-//                             <span className="flex items-center">
-//                               <Clock className="w-4 h-4 mr-1" />
-//                               {match.duration}
-//                             </span>
-//                             <span className="flex items-center">
-//                               <Calendar className="w-4 h-4 mr-1" />
-//                               {new Date(match.startDate).toLocaleDateString()}
-//                             </span>
+//                             <span className="flex items-center"><Clock className="w-4 h-4 mr-1" />{match.duration}</span>
+//                             <span className="flex items-center"><Calendar className="w-4 h-4 mr-1" />{new Date(match.startDate).toLocaleDateString()}</span>
 //                           </div>
-//                           <button 
-//                             onClick={() => handleViewMatch(match.id)}
-//                             className="text-blue-600 hover:text-blue-700 font-medium"
-//                           >
-//                             View Details →
-//                           </button>
+//                           <button onClick={() => handleViewMatch(match.id)} className="text-blue-600 hover:text-blue-700 font-medium">View Details →</button>
 //                         </div>
 //                       </div>
 //                     ))}
 //                   </div>
 //                 ) : (
 //                   <div className="text-center py-12">
-//                     <div className="bg-gray-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
-//                       <LinkIcon className="w-10 h-10 text-gray-400" />
-//                     </div>
+//                     <div className="bg-gray-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4"><LinkIcon className="w-10 h-10 text-gray-400" /></div>
 //                     <h3 className="text-lg font-medium text-gray-900 mb-2">No matches yet</h3>
 //                     <p className="text-gray-500">Complete your profile to get matched with relevant projects</p>
 //                   </div>
 //                 )}
-//               </div>
-//             )}
-
-//             {/* Support Tab */}
-//             {activeTab === 'support' && (
-//               <div className="space-y-6">
-//                 {/* Support Header */}
-//                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-//                   <div className="flex items-center justify-between">
-//                     <div>
-//                       <h2 className="text-2xl font-bold text-gray-900">Support Center</h2>
-//                       <p className="text-gray-600 mt-1">Get help with your account, projects, or technical issues</p>
-//                     </div>
-//                     <button
-//                       onClick={() => setIsSupportModalOpen(true)}
-//                       className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition font-medium flex items-center"
-//                     >
-//                       <HelpCircle className="w-5 h-5 mr-2" />
-//                       Contact Support
-//                     </button>
-//                   </div>
-//                 </div>
-
-//                 {/* Quick Support Options */}
-//                 <div className="grid md:grid-cols-3 gap-4">
-//                   <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center hover:shadow-md transition">
-//                     <div className="bg-blue-100 w-12 h-12 rounded-lg flex items-center justify-center mx-auto mb-4">
-//                       <Mail className="w-6 h-6 text-blue-600" />
-//                     </div>
-//                     <h3 className="font-semibold text-gray-900 mb-2">Email Support</h3>
-//                     <p className="text-sm text-gray-600 mb-3">support@webconsultanthub.com</p>
-//                     <p className="text-xs text-gray-500">Reply within 24 hours</p>
-//                   </div>
-
-//                   <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center hover:shadow-md transition">
-//                     <div className="bg-green-100 w-12 h-12 rounded-lg flex items-center justify-center mx-auto mb-4">
-//                       <MessageSquare className="w-6 h-6 text-green-600" />
-//                     </div>
-//                     <h3 className="font-semibold text-gray-900 mb-2">Live Chat</h3>
-//                     <p className="text-sm text-gray-600 mb-3">Chat with support team</p>
-//                     <p className="text-xs text-gray-500">Available 24/7</p>
-//                   </div>
-
-//                   <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center hover:shadow-md transition">
-//                     <div className="bg-purple-100 w-12 h-12 rounded-lg flex items-center justify-center mx-auto mb-4">
-//                       <FileText className="w-6 h-6 text-purple-600" />
-//                     </div>
-//                     <h3 className="font-semibold text-gray-900 mb-2">Help Center</h3>
-//                     <p className="text-sm text-gray-600 mb-3">Browse knowledge base</p>
-//                     <p className="text-xs text-gray-500">Self-service resources</p>
-//                   </div>
-//                 </div>
-
-//                 {/* Support Tickets */}
-//                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-//                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Your Support Tickets</h3>
-                  
-//                   {supportLoading ? (
-//                     <div className="flex justify-center py-8">
-//                       <Loader className="w-8 h-8 animate-spin text-blue-600" />
-//                     </div>
-//                   ) : supportTickets.length > 0 ? (
-//                     <div className="space-y-4">
-//                       {supportTickets.map((ticket) => (
-//                         <SupportTicket
-//                           key={ticket._id}
-//                           ticket={ticket}
-//                           onViewDetails={fetchTicketDetails}
-//                         />
-//                       ))}
-//                     </div>
-//                   ) : (
-//                     <div className="text-center py-12">
-//                       <div className="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-//                         <Ticket className="w-8 h-8 text-gray-400" />
-//                       </div>
-//                       <h3 className="text-lg font-medium text-gray-900 mb-2">No support tickets</h3>
-//                       <p className="text-gray-500 mb-4">You haven't created any support tickets yet</p>
-//                       <button
-//                         onClick={() => setIsSupportModalOpen(true)}
-//                         className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition font-medium"
-//                       >
-//                         Create Support Ticket
-//                       </button>
-//                     </div>
-//                   )}
-//                 </div>
 //               </div>
 //             )}
 
@@ -1168,9 +1114,7 @@
 //               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
 //                 <h2 className="text-xl font-bold text-gray-900 mb-6">My Projects</h2>
 //                 <div className="text-center py-12">
-//                   <div className="bg-gray-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
-//                     <Briefcase className="w-10 h-10 text-gray-400" />
-//                   </div>
+//                   <div className="bg-gray-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4"><Briefcase className="w-10 h-10 text-gray-400" /></div>
 //                   <h3 className="text-lg font-medium text-gray-900 mb-2">No projects yet</h3>
 //                   <p className="text-gray-500">Projects will appear here once you're matched and accepted</p>
 //                 </div>
@@ -1182,9 +1126,7 @@
 //               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
 //                 <h2 className="text-xl font-bold text-gray-900 mb-6">Messages</h2>
 //                 <div className="text-center py-12">
-//                   <div className="bg-gray-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
-//                     <MessageSquare className="w-10 h-10 text-gray-400" />
-//                   </div>
+//                   <div className="bg-gray-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4"><MessageSquare className="w-10 h-10 text-gray-400" /></div>
 //                   <h3 className="text-lg font-medium text-gray-900 mb-2">No messages yet</h3>
 //                   <p className="text-gray-500">Messages will appear here when you connect with clients</p>
 //                 </div>
@@ -1196,11 +1138,58 @@
 //               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
 //                 <h2 className="text-xl font-bold text-gray-900 mb-6">Documents</h2>
 //                 <div className="text-center py-12">
-//                   <div className="bg-gray-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
-//                     <FileText className="w-10 h-10 text-gray-400" />
-//                   </div>
+//                   <div className="bg-gray-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4"><FileText className="w-10 h-10 text-gray-400" /></div>
 //                   <h3 className="text-lg font-medium text-gray-900 mb-2">No documents uploaded</h3>
 //                   <p className="text-gray-500">Upload contracts, invoices, and other documents here</p>
+//                 </div>
+//               </div>
+//             )}
+
+//             {/* Support Tab */}
+//             {activeTab === 'support' && (
+//               <div className="space-y-6">
+//                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+//                   <div className="flex items-center justify-between">
+//                     <div><h2 className="text-2xl font-bold text-gray-900">Support Center</h2><p className="text-gray-600 mt-1">Get help with your account, projects, or technical issues</p></div>
+//                     <button onClick={() => setIsSupportModalOpen(true)} className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition font-medium flex items-center"><HelpCircle className="w-5 h-5 mr-2" />Contact Support</button>
+//                   </div>
+//                 </div>
+
+//                 <div className="grid md:grid-cols-3 gap-4">
+//                   <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center hover:shadow-md transition">
+//                     <div className="bg-blue-100 w-12 h-12 rounded-lg flex items-center justify-center mx-auto mb-4"><Mail className="w-6 h-6 text-blue-600" /></div>
+//                     <h3 className="font-semibold text-gray-900 mb-2">Email Support</h3>
+//                     <p className="text-sm text-gray-600 mb-3">support@webconsultanthub.com</p>
+//                     <p className="text-xs text-gray-500">Reply within 24 hours</p>
+//                   </div>
+//                   <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center hover:shadow-md transition">
+//                     <div className="bg-green-100 w-12 h-12 rounded-lg flex items-center justify-center mx-auto mb-4"><MessageSquare className="w-6 h-6 text-green-600" /></div>
+//                     <h3 className="font-semibold text-gray-900 mb-2">Live Chat</h3>
+//                     <p className="text-sm text-gray-600 mb-3">Chat with support team</p>
+//                     <p className="text-xs text-gray-500">Available 24/7</p>
+//                   </div>
+//                   <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center hover:shadow-md transition">
+//                     <div className="bg-purple-100 w-12 h-12 rounded-lg flex items-center justify-center mx-auto mb-4"><FileText className="w-6 h-6 text-purple-600" /></div>
+//                     <h3 className="font-semibold text-gray-900 mb-2">Help Center</h3>
+//                     <p className="text-sm text-gray-600 mb-3">Browse knowledge base</p>
+//                     <p className="text-xs text-gray-500">Self-service resources</p>
+//                   </div>
+//                 </div>
+
+//                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+//                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Your Support Tickets</h3>
+//                   {supportLoading ? (
+//                     <div className="flex justify-center py-8"><Loader className="w-8 h-8 animate-spin text-blue-600" /></div>
+//                   ) : supportTickets.length > 0 ? (
+//                     <div className="space-y-4">{supportTickets.map((ticket) => (<SupportTicket key={ticket._id} ticket={ticket} onViewDetails={fetchTicketDetails} />))}</div>
+//                   ) : (
+//                     <div className="text-center py-12">
+//                       <div className="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"><Ticket className="w-8 h-8 text-gray-400" /></div>
+//                       <h3 className="text-lg font-medium text-gray-900 mb-2">No support tickets</h3>
+//                       <p className="text-gray-500 mb-4">You haven't created any support tickets yet</p>
+//                       <button onClick={() => setIsSupportModalOpen(true)} className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition font-medium">Create Support Ticket</button>
+//                     </div>
+//                   )}
 //                 </div>
 //               </div>
 //             )}
@@ -1210,48 +1199,37 @@
 //               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
 //                 <h2 className="text-xl font-bold text-gray-900 mb-6">Settings</h2>
 //                 <div className="space-y-6">
-//                   <div>
-//                     <h3 className="text-lg font-medium text-gray-900 mb-4">Notification Preferences</h3>
+//                   <div><h3 className="text-lg font-medium text-gray-900 mb-4">Notification Preferences</h3>
 //                     <div className="space-y-3">
-//                       <label className="flex items-center">
-//                         <input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
-//                         <span className="ml-2 text-gray-700">Email notifications for new matches</span>
-//                       </label>
-//                       <label className="flex items-center">
-//                         <input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
-//                         <span className="ml-2 text-gray-700">Email notifications for messages</span>
-//                       </label>
-//                       <label className="flex items-center">
-//                         <input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
-//                         <span className="ml-2 text-gray-700">Weekly summary emails</span>
-//                       </label>
+//                       <label className="flex items-center"><input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" /><span className="ml-2 text-gray-700">Email notifications for new matches</span></label>
+//                       <label className="flex items-center"><input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" /><span className="ml-2 text-gray-700">Email notifications for messages</span></label>
+//                       <label className="flex items-center"><input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" /><span className="ml-2 text-gray-700">Weekly summary emails</span></label>
 //                     </div>
 //                   </div>
-                  
-//                   <div>
-//                     <h3 className="text-lg font-medium text-gray-900 mb-4">Privacy Settings</h3>
+//                   <div><h3 className="text-lg font-medium text-gray-900 mb-4">Privacy Settings</h3>
 //                     <div className="space-y-3">
-//                       <label className="flex items-center">
-//                         <input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
-//                         <span className="ml-2 text-gray-700">Make my profile visible to clients</span>
-//                       </label>
-//                       <label className="flex items-center">
-//                         <input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
-//                         <span className="ml-2 text-gray-700">Show my availability status</span>
-//                       </label>
+//                       <label className="flex items-center"><input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" /><span className="ml-2 text-gray-700">Make my profile visible to clients</span></label>
+//                       <label className="flex items-center"><input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" /><span className="ml-2 text-gray-700">Show my availability status</span></label>
 //                     </div>
 //                   </div>
-                  
-//                   <div className="pt-4 border-t border-gray-200">
-//                     <button className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 text-sm">
-//                       Delete Account
-//                     </button>
-//                   </div>
+//                   <div className="pt-4 border-t border-gray-200"><button className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 text-sm">Delete Account</button></div>
 //                 </div>
 //               </div>
 //             )}
 //           </main>
 //         </div>
+// {showProfileModal && (
+//   <ProfileCompletionModal
+//     isOpen={showProfileModal}
+//     onClose={() => setShowProfileModal(false)}
+//     initialStep={modalStep}
+//     onComplete={handleProfileComplete}
+//     user={user}
+//     BACKEND_URL={BACKEND_URL}
+//     updateProfileCompletion={updateProfileCompletion}
+//   />
+// )}
+
 //       </div>
 //     </ErrorBoundary>
 //   );
@@ -1260,10 +1238,7 @@
 // export default ConsultantDashboard;
 
 
-
-
-// src/page/consultant/Dashboard.jsx (Updated with Calendar & Agenda Tab)
-
+// src/page/consultant/Dashboard.jsx
 import React, { useState, useEffect } from 'react';
 import { 
   Briefcase, 
@@ -1287,21 +1262,21 @@ import {
   Loader,
   HelpCircle,
   Send,
-  Paperclip,
   X,
   ChevronRight,
   Mail,
-  Phone,
   LifeBuoy,
   Ticket,
   Grid,
-  List
+  List,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import ContactSupportModal from '../../components/modals/ContactSupportModal';
 import AvailabilityCalendar from '../../components/AvailabilityCalendar';
 import AgendaWidget from '../../components/AgendaWidget';
+import ProfileCompletionBanner from '../../components/ProfileCompletionBanner';
+import ProfileCompletionModal from '../../components/ProfileCompletionModal';
 
 // Error Boundary Component
 class ErrorBoundary extends React.Component {
@@ -1338,12 +1313,11 @@ class ErrorBoundary extends React.Component {
         </div>
       );
     }
-
     return this.props.children;
   }
 }
 
-// Support Ticket Component (same as before)
+// Support Ticket Component
 const SupportTicket = ({ ticket, onViewDetails }) => {
   const getStatusColor = (status) => {
     switch(status) {
@@ -1410,14 +1384,13 @@ const SupportTicket = ({ ticket, onViewDetails }) => {
   );
 };
 
-// Ticket Details Modal (same as before)
-const TicketDetailsModal = ({ ticket, onClose, onReply, BACKEND_URL }) => {
+// Ticket Details Modal
+const TicketDetailsModal = ({ ticket, onClose, onReply }) => {
   const [replyMessage, setReplyMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   const handleSubmitReply = async () => {
     if (!replyMessage.trim()) return;
-    
     setSubmitting(true);
     await onReply(ticket._id, replyMessage);
     setReplyMessage('');
@@ -1457,7 +1430,6 @@ const TicketDetailsModal = ({ ticket, onClose, onReply, BACKEND_URL }) => {
           </div>
           
           <div className="p-6">
-            {/* Ticket Header */}
             <div className="mb-6">
               <div className="flex items-center space-x-2 mb-3">
                 <span className={`px-3 py-1 text-sm rounded-full ${getPriorityColor(ticket.priority)}`}>
@@ -1471,7 +1443,6 @@ const TicketDetailsModal = ({ ticket, onClose, onReply, BACKEND_URL }) => {
               <p className="text-sm text-gray-600">Created on {new Date(ticket.createdAt).toLocaleString()}</p>
             </div>
 
-            {/* Original Message */}
             <div className="mb-6 p-4 bg-gray-50 rounded-lg">
               <div className="flex items-center justify-between mb-2">
                 <span className="font-medium text-gray-900">Your Message</span>
@@ -1480,7 +1451,6 @@ const TicketDetailsModal = ({ ticket, onClose, onReply, BACKEND_URL }) => {
               <p className="text-gray-700 whitespace-pre-wrap">{ticket.message}</p>
             </div>
 
-            {/* Replies */}
             {ticket.replies && ticket.replies.length > 0 && (
               <div className="mb-6">
                 <h4 className="font-medium text-gray-900 mb-4">Conversation</h4>
@@ -1504,7 +1474,6 @@ const TicketDetailsModal = ({ ticket, onClose, onReply, BACKEND_URL }) => {
               </div>
             )}
 
-            {/* Reply Form */}
             {ticket.status !== 'closed' && ticket.status !== 'resolved' && (
               <div className="border-t border-gray-200 pt-6">
                 <h4 className="font-medium text-gray-900 mb-3">Add Reply</h4>
@@ -1544,7 +1513,7 @@ const TicketDetailsModal = ({ ticket, onClose, onReply, BACKEND_URL }) => {
 };
 
 const ConsultantDashboard = () => {
-  const { user, logout, profileCompletion, BACKEND_URL } = useAuth();
+  const { user, logout, profileCompletion, BACKEND_URL, updateProfileCompletion } = useAuth();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
@@ -1555,8 +1524,9 @@ const ConsultantDashboard = () => {
   const [supportTickets, setSupportTickets] = useState([]);
   const [supportLoading, setSupportLoading] = useState(false);
   const [availabilityData, setAvailabilityData] = useState({});
-  const [calendarView, setCalendarView] = useState('full'); // 'full' or 'compact'
-  
+  const [calendarView, setCalendarView] = useState('full');
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [modalStep, setModalStep] = useState('basic');
   const [dashboardData, setDashboardData] = useState({
     profile: null,
     matches: [],
@@ -1568,37 +1538,64 @@ const ConsultantDashboard = () => {
     }
   });
 
-  // Debug: Log profile completion on mount
-  useEffect(() => {
-    console.log('🔍 Dashboard mounted');
-    console.log('User:', user);
-    console.log('Profile Completion from context:', profileCompletion);
-    console.log('localStorage:', {
-      profile_setup_complete: localStorage.getItem('profile_setup_complete'),
-      subscription_complete: localStorage.getItem('subscription_complete'),
-      profile_completion: localStorage.getItem('profile_completion')
-    });
-
-    // Check if we should be here based on profile completion
-    const basicComplete = profileCompletion.basicInfo || localStorage.getItem('profile_setup_complete') === 'basic' || localStorage.getItem('profile_setup_complete') === 'availability';
-    const availabilityComplete = profileCompletion.availability || localStorage.getItem('profile_setup_complete') === 'availability';
-    const paymentComplete = profileCompletion.payment || localStorage.getItem('subscription_complete') === 'true';
-
-    console.log('Completion check:', { basicComplete, availabilityComplete, paymentComplete });
-
-    if (!basicComplete) {
-      console.log('⚠️ Basic info not complete, redirecting to profile setup');
-      navigate('/consultant/profile-setup?step=basic');
-    } else if (!availabilityComplete) {
-      console.log('⚠️ Availability not complete, redirecting to availability setup');
-      navigate('/consultant/profile-setup?step=availability');
-    } else if (!paymentComplete) {
-      console.log('⚠️ Payment not complete, redirecting to subscription');
-      navigate('/consultant/subscription');
-    } else {
-      console.log('✅ All checks passed, loading dashboard');
+  // Define fetchDashboardData as a function that can be called from multiple places
+  const fetchDashboardData = async () => {
+    if (!user?.email) {
+      setLoading(false);
+      return;
     }
-  }, [user, profileCompletion, navigate]);
+
+    try {
+      setLoading(true);
+      setError('');
+      
+      const token = localStorage.getItem('auth_token');
+      console.log('Fetching dashboard data for:', user.email);
+      
+      const response = await fetch(`${BACKEND_URL}/api/dashboard/${encodeURIComponent(user.email)}`, {
+        headers: {
+          'Authorization': token ? `Bearer ${token}` : '',
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      console.log('Dashboard data received:', result);
+
+      if (result.success && result.data) {
+        const profile = result.data.profile || {};
+        const matches = Array.isArray(result.data.recentMatches) ? result.data.recentMatches : [];
+        
+        setDashboardData({
+          profile: profile,
+          matches: matches,
+          stats: {
+            profileViews: profile.profileViews || 0,
+            matchRequests: matches.length || 0,
+            interviews: matches.filter(m => m?.status === 'interview_scheduled' || m?.adminReviewStatus === 'interview_scheduled').length || 0,
+            earnings: profile.earningsYtd || 0
+          }
+        });
+
+        if (result.data.availability) {
+          setAvailabilityData(result.data.availability);
+        }
+
+        await fetchSupportTickets();
+      } else {
+        setError(result.error || 'Failed to load dashboard data');
+      }
+    } catch (err) {
+      console.error('Error fetching dashboard:', err);
+      setError('Network error. Please check your connection and try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Fetch support tickets
   const fetchSupportTickets = async () => {
@@ -1607,7 +1604,7 @@ const ConsultantDashboard = () => {
     try {
       setSupportLoading(true);
       const token = localStorage.getItem('auth_token');
-      const response = await fetch(`${BACKEND_URL}/api/user/support-requests/${encodeURIComponent(user.email)}`, {
+      const response = await fetch(`${BACKEND_URL}/api/support/user/${encodeURIComponent(user.email)}`, {
         headers: {
           'Authorization': token ? `Bearer ${token}` : '',
           'Content-Type': 'application/json'
@@ -1628,10 +1625,9 @@ const ConsultantDashboard = () => {
   // Fetch ticket details
   const fetchTicketDetails = async (ticket) => {
     try {
-      setLoading(true);
       const token = localStorage.getItem('auth_token');
       const response = await fetch(
-        `${BACKEND_URL}/api/user/support-requests/${encodeURIComponent(user.email)}/${ticket.ticketId}`,
+        `${BACKEND_URL}/api/support/ticket/${ticket.ticketId}?email=${encodeURIComponent(user.email)}`,
         {
           headers: {
             'Authorization': token ? `Bearer ${token}` : '',
@@ -1649,8 +1645,6 @@ const ConsultantDashboard = () => {
       }
     } catch (err) {
       console.error('Error fetching ticket details:', err);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -1684,95 +1678,62 @@ const ConsultantDashboard = () => {
     console.log('Availability updated:', { date, status, timeRange });
     setAvailabilityData(prev => ({
       ...prev,
-      [date.toISOString().split('T')[0]]: { status, timeRange }
+      [date]: { status, timeRange }
     }));
   };
 
-  // Fetch real dashboard data from backend
+  // Initial data fetch
   useEffect(() => {
-    const fetchDashboardData = async () => {
-      if (!user?.email) {
-        setLoading(false);
-        return;
-      }
-
-      try {
-        setLoading(true);
-        setError('');
-        
-        const token = localStorage.getItem('auth_token');
-        console.log('Fetching dashboard data for:', user.email);
-        
-        const response = await fetch(`${BACKEND_URL}/api/user/dashboard/${encodeURIComponent(user.email)}`, {
-          headers: {
-            'Authorization': token ? `Bearer ${token}` : '',
-            'Content-Type': 'application/json'
-          }
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const result = await response.json();
-        console.log('Dashboard data received:', result);
-
-        if (result.success && result.data) {
-          const profile = result.data.profile || {};
-          const matches = Array.isArray(result.data.matches) ? result.data.matches : [];
-          
-          setDashboardData({
-            profile: profile,
-            matches: matches,
-            stats: {
-              profileViews: profile.profile_views || 0,
-              matchRequests: matches.length || 0,
-              interviews: matches.filter(m => m?.admin_review_status === 'interview_scheduled').length || 0,
-              earnings: profile.earnings_ytd || 0
-            }
-          });
-
-          if (profile.availability) {
-            setAvailabilityData(profile.availability);
-          }
-
-          await fetchSupportTickets();
-        } else {
-          setError(result.error || 'Failed to load dashboard data');
-        }
-      } catch (err) {
-        console.error('Error fetching dashboard:', err);
-        setError('Network error. Please check your connection and try again.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     if (user?.email) {
       fetchDashboardData();
     }
   }, [user, BACKEND_URL]);
 
-  // Safe data access with fallbacks
+  // Check if profile is incomplete and show modal after delay
+  useEffect(() => {
+    if (user && profileCompletion.status !== 'complete') {
+      const timer = setTimeout(() => {
+        setShowProfileModal(true);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [user, profileCompletion]);
+
+  const handleProfileComplete = (step) => {
+    if (step === 'payment') {
+      updateProfileCompletion('payment', true);
+    }
+    setShowProfileModal(false);
+    // Refresh dashboard data
+    fetchDashboardData();
+  };
+
+  // Safe data access with fallbacks - FIXED expertise mapping
   const profile = dashboardData.profile ? {
-    name: dashboardData.profile.full_name || user?.name || 'Consultant',
+    name: dashboardData.profile.fullName || user?.name || 'Consultant',
     title: dashboardData.profile.title || 'Senior Consultant',
-    location: dashboardData.profile.base_city && dashboardData.profile.base_country 
-      ? `${dashboardData.profile.base_city}, ${dashboardData.profile.base_country}`
+    location: dashboardData.profile.baseCity && dashboardData.profile.baseCountry 
+      ? `${dashboardData.profile.baseCity}, ${dashboardData.profile.baseCountry}`
       : 'Location not set',
     availability: dashboardData.profile.availability || 'Availability not set',
     rating: dashboardData.profile.rating || 0,
-    completedProjects: dashboardData.profile.completed_projects || 0,
-    hourlyRate: dashboardData.profile.hourly_rate 
-      ? `€${dashboardData.profile.hourly_rate}` 
+    completedProjects: dashboardData.profile.completedProjects || 0,
+    hourlyRate: dashboardData.profile.hourlyRate 
+      ? `€${dashboardData.profile.hourlyRate}` 
       : 'Rate not set',
     expertise: Array.isArray(dashboardData.profile.positions) 
-      ? dashboardData.profile.positions 
+      ? dashboardData.profile.positions.map(p => {
+          // Handle both object and string formats
+          if (p && typeof p === 'object') {
+            return p.name || p;
+          }
+          return p;
+        })
       : (typeof dashboardData.profile.positions === 'string' 
           ? dashboardData.profile.positions.split(',').map(s => s.trim()) 
           : []),
-    verified: dashboardData.profile.is_verified || false,
-    subscription_status: dashboardData.profile.subscription_status || 'inactive'
+    verified: dashboardData.profile.isVerified || false,
+    subscriptionStatus: dashboardData.profile.subscriptionStatus || 'inactive'
   } : {
     name: user?.name || 'Consultant',
     title: 'Consultant',
@@ -1783,17 +1744,20 @@ const ConsultantDashboard = () => {
     hourlyRate: 'Rate not set',
     expertise: [],
     verified: false,
-    subscription_status: 'inactive'
+    subscriptionStatus: 'inactive'
   };
 
+  // FIXED activeMatches mapping to handle objects
   const activeMatches = Array.isArray(dashboardData.matches) 
     ? dashboardData.matches.map(match => ({
-        id: match?.id || Math.random(),
-        client: match?.company_name || 'Client',
-        project: match?.request_title || 'Project',
+        id: match?._id || match?.id || Math.random(),
+        client: typeof match?.companyName === 'object' 
+          ? (match.companyName?.name || 'Client') 
+          : (match?.companyName || match?.clientName || 'Client'),
+        project: match?.requestTitle || match?.title || 'Project',
         duration: match?.duration || 'Duration TBD',
-        startDate: match?.start_date || new Date().toISOString().split('T')[0],
-        status: match?.admin_review_status || 'pending'
+        startDate: match?.startDate || new Date().toISOString().split('T')[0],
+        status: match?.adminReviewStatus || match?.status || 'suggested'
       }))
     : [];
 
@@ -1826,26 +1790,40 @@ const ConsultantDashboard = () => {
 
   const getStatusColor = (status) => {
     switch(status) {
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'interview_scheduled': return 'bg-blue-100 text-blue-800';
-      case 'accepted': return 'bg-green-100 text-green-800';
-      case 'rejected': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'pending':
+      case 'suggested':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'interview_scheduled':
+      case 'contacted':
+        return 'bg-blue-100 text-blue-800';
+      case 'accepted':
+      case 'shortlisted':
+        return 'bg-green-100 text-green-800';
+      case 'rejected':
+      case 'unavailable':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
   const getStatusText = (status) => {
     switch(status) {
-      case 'pending': return 'Pending Acceptance';
+      case 'suggested': return 'Suggested Match';
+      case 'pending': return 'Pending';
+      case 'contacted': return 'Contacted';
       case 'interview_scheduled': return 'Interview Scheduled';
+      case 'shortlisted': return 'Shortlisted';
       case 'accepted': return 'Accepted';
       case 'rejected': return 'Declined';
+      case 'unavailable': return 'Unavailable';
       default: return status?.replace('_', ' ') || 'Unknown';
     }
   };
 
   const handleCompleteProfile = () => {
-    navigate('/consultant/profile-setup');
+    setModalStep('basic');
+    setShowProfileModal(true);
   };
 
   const handleViewMatch = (matchId) => {
@@ -1863,7 +1841,7 @@ const ConsultantDashboard = () => {
     );
   }
 
-  if (error) {
+  if (error && !dashboardData.profile) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center max-w-md p-8">
@@ -1898,14 +1876,26 @@ const ConsultantDashboard = () => {
             ticket={selectedTicket}
             onClose={() => setSelectedTicket(null)}
             onReply={handleSubmitReply}
+          />
+        )}
+
+        {/* Profile Completion Modal */}
+        {showProfileModal && (
+          <ProfileCompletionModal
+            isOpen={showProfileModal}
+            onClose={() => setShowProfileModal(false)}
+            initialStep={modalStep}
+            onComplete={handleProfileComplete}
+            user={user}
             BACKEND_URL={BACKEND_URL}
+            updateProfileCompletion={updateProfileCompletion}
           />
         )}
 
         {/* Mobile Sidebar Overlay */}
         {sidebarOpen && (
           <div 
-            className="fixed inset-0 bg-gray-600 bg-opacity-10 z-20 lg:hidden"
+            className="fixed inset-0 bg-gray-600 bg-opacity-50 z-20 lg:hidden"
             onClick={() => setSidebarOpen(false)}
           />
         )}
@@ -1917,7 +1907,7 @@ const ConsultantDashboard = () => {
             <div className="px-4 py-6 border-b border-blue-700">
               <div className="flex items-center space-x-3">
                 <div className="rounded-lg">
-                  <img src="/logo.png" alt="Logo" className="h-20 object-contain" />
+                  <img src="/logo.png" alt="Logo" className="h-12 object-contain" />
                 </div>
                 <div>
                   <h2 className="font-bold text-lg">Consultant Panel</h2>
@@ -1943,9 +1933,9 @@ const ConsultantDashboard = () => {
                   )}
                 </div>
               </div>
-              {profile.subscription_status !== 'active' && (
+              {profile.subscriptionStatus !== 'active' && (
                 <div className="mt-3 bg-yellow-500/20 text-yellow-200 text-xs p-2 rounded-lg">
-                  Subscription {profile.subscription_status}
+                  Subscription {profile.subscriptionStatus}
                 </div>
               )}
             </div>
@@ -2027,6 +2017,14 @@ const ConsultantDashboard = () => {
 
           {/* Page Content */}
           <main className="p-4 sm:p-6 lg:p-8">
+            <ProfileCompletionBanner 
+              profileCompletion={profileCompletion} 
+              onComplete={(step) => {
+                setModalStep(step);
+                setShowProfileModal(true);
+              }}
+            />
+            
             {activeTab === 'overview' && (
               <>
                 {/* Welcome Header */}
@@ -2079,25 +2077,6 @@ const ConsultantDashboard = () => {
                   </div>
                 </div>
 
-                {/* Profile Completion */}
-                {!dashboardData.profile && (
-                  <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
-                    <h2 className="text-lg font-semibold text-gray-900 mb-4">Complete Your Profile</h2>
-                    <div className="w-full bg-gray-200 rounded-full h-2.5 mb-4">
-                      <div className="bg-yellow-500 h-2.5 rounded-full" style={{ width: '30%' }}></div>
-                    </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600">30% complete - Finish setting up your profile to get matches</span>
-                      <button 
-                        onClick={handleCompleteProfile}
-                        className="text-blue-600 hover:text-blue-700 font-medium"
-                      >
-                        Complete Profile →
-                      </button>
-                    </div>
-                  </div>
-                )}
-
                 {/* Two Column Layout */}
                 <div className="grid lg:grid-cols-2 gap-6">
                   {/* Active Matches */}
@@ -2114,8 +2093,11 @@ const ConsultantDashboard = () => {
                     <div className="p-6">
                       {activeMatches.length > 0 ? (
                         activeMatches.slice(0, 3).map((match) => (
-                          <div key={match.id} className="mb-4 last:mb-0 p-4 bg-gray-50 rounded-lg hover:shadow-md transition cursor-pointer"
-                               onClick={() => handleViewMatch(match.id)}>
+                          <div 
+                            key={match.id} 
+                            className="mb-4 last:mb-0 p-4 bg-gray-50 rounded-lg hover:shadow-md transition cursor-pointer"
+                            onClick={() => handleViewMatch(match.id)}
+                          >
                             <div className="flex justify-between items-start mb-2">
                               <h3 className="font-medium text-gray-900">{match.client}</h3>
                               <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(match.status)}`}>
@@ -2204,10 +2186,9 @@ const ConsultantDashboard = () => {
               </>
             )}
 
-            {/* NEW: Calendar & Agenda Tab */}
+            {/* Calendar & Agenda Tab */}
             {activeTab === 'calendar' && (
               <div className="space-y-6">
-                {/* Header */}
                 <div className="flex justify-between items-center">
                   <div>
                     <h1 className="text-2xl font-bold text-gray-900">Calendar & Agenda</h1>
@@ -2216,22 +2197,14 @@ const ConsultantDashboard = () => {
                   <div className="flex items-center space-x-2">
                     <button
                       onClick={() => setCalendarView('full')}
-                      className={`p-2 rounded-lg transition ${
-                        calendarView === 'full' 
-                          ? 'bg-blue-100 text-blue-600' 
-                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                      }`}
+                      className={`p-2 rounded-lg transition ${calendarView === 'full' ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
                       title="Full View"
                     >
                       <Grid className="w-5 h-5" />
                     </button>
                     <button
                       onClick={() => setCalendarView('compact')}
-                      className={`p-2 rounded-lg transition ${
-                        calendarView === 'compact' 
-                          ? 'bg-blue-100 text-blue-600' 
-                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                      }`}
+                      className={`p-2 rounded-lg transition ${calendarView === 'compact' ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
                       title="Compact View"
                     >
                       <List className="w-5 h-5" />
@@ -2239,9 +2212,7 @@ const ConsultantDashboard = () => {
                   </div>
                 </div>
 
-                {/* Calendar and Agenda Layout */}
                 <div className={`grid ${calendarView === 'full' ? 'lg:grid-cols-3' : 'lg:grid-cols-2'} gap-6`}>
-                  {/* Calendar Section */}
                   <div className={calendarView === 'full' ? 'lg:col-span-2' : 'lg:col-span-1'}>
                     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                       <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
@@ -2261,7 +2232,6 @@ const ConsultantDashboard = () => {
                     </div>
                   </div>
 
-                  {/* Agenda Widget Section */}
                   <div className={calendarView === 'full' ? 'lg:col-span-1' : 'lg:col-span-1'}>
                     <AgendaWidget
                       userId={user?.email}
@@ -2272,7 +2242,6 @@ const ConsultantDashboard = () => {
                   </div>
                 </div>
 
-                {/* Upcoming Deadlines Section (Optional) */}
                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                   <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                     <Clock className="w-5 h-5 mr-2 text-orange-600" />
@@ -2284,7 +2253,6 @@ const ConsultantDashboard = () => {
                   </div>
                 </div>
 
-                {/* Availability Tips */}
                 <div className="bg-blue-50 rounded-xl border border-blue-200 p-6">
                   <h3 className="font-semibold text-blue-900 mb-2 flex items-center">
                     <HelpCircle className="w-5 h-5 mr-2" />
@@ -2300,13 +2268,16 @@ const ConsultantDashboard = () => {
               </div>
             )}
 
-            {/* Profile Tab */}
+            {/* Profile Tab - FIXED expertise rendering */}
             {activeTab === 'profile' && (
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                 <div className="flex justify-between items-center mb-6">
                   <h2 className="text-xl font-bold text-gray-900">Professional Profile</h2>
                   <button 
-                    onClick={handleCompleteProfile}
+                    onClick={() => {
+                      setModalStep('basic');
+                      setShowProfileModal(true);
+                    }}
                     className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 text-sm"
                   >
                     Edit Profile
@@ -2317,70 +2288,38 @@ const ConsultantDashboard = () => {
                   <div>
                     <h3 className="font-medium text-gray-900 mb-4 pb-2 border-b">Personal Information</h3>
                     <div className="space-y-4">
-                      <div>
-                        <label className="text-sm text-gray-500">Full Name</label>
-                        <p className="font-medium text-gray-900">{profile.name}</p>
-                      </div>
-                      <div>
-                        <label className="text-sm text-gray-500">Professional Title</label>
-                        <p className="font-medium text-gray-900">{profile.title}</p>
-                      </div>
-                      <div>
-                        <label className="text-sm text-gray-500">Location</label>
-                        <p className="font-medium text-gray-900 flex items-center">
-                          <MapPin className="w-4 h-4 mr-1 text-gray-400" />
-                          {profile.location}
-                        </p>
-                      </div>
-                      <div>
-                        <label className="text-sm text-gray-500">Email</label>
-                        <p className="font-medium text-gray-900">{user?.email || 'Not provided'}</p>
-                      </div>
+                      <div><label className="text-sm text-gray-500">Full Name</label><p className="font-medium text-gray-900">{profile.name}</p></div>
+                      <div><label className="text-sm text-gray-500">Professional Title</label><p className="font-medium text-gray-900">{profile.title}</p></div>
+                      <div><label className="text-sm text-gray-500">Location</label><p className="font-medium text-gray-900 flex items-center"><MapPin className="w-4 h-4 mr-1 text-gray-400" />{profile.location}</p></div>
+                      <div><label className="text-sm text-gray-500">Email</label><p className="font-medium text-gray-900">{user?.email || 'Not provided'}</p></div>
                     </div>
                   </div>
 
                   <div>
                     <h3 className="font-medium text-gray-900 mb-4 pb-2 border-b">Professional Details</h3>
                     <div className="space-y-4">
-                      <div>
-                        <label className="text-sm text-gray-500">Hourly Rate</label>
-                        <p className="font-medium text-gray-900">{profile.hourlyRate}</p>
-                      </div>
-                      <div>
-                        <label className="text-sm text-gray-500">Completed Projects</label>
-                        <p className="font-medium text-gray-900">{profile.completedProjects}</p>
-                      </div>
-                      <div>
-                        <label className="text-sm text-gray-500">Availability</label>
-                        <p className="font-medium text-gray-900 flex items-center">
-                          <Calendar className="w-4 h-4 mr-1 text-gray-400" />
-                          {profile.availability}
-                        </p>
-                      </div>
+                      <div><label className="text-sm text-gray-500">Hourly Rate</label><p className="font-medium text-gray-900">{profile.hourlyRate}</p></div>
+                      <div><label className="text-sm text-gray-500">Completed Projects</label><p className="font-medium text-gray-900">{profile.completedProjects}</p></div>
+                      <div><label className="text-sm text-gray-500">Availability</label><p className="font-medium text-gray-900 flex items-center"><Calendar className="w-4 h-4 mr-1 text-gray-400" />{profile.availability}</p></div>
                       {profile.expertise.length > 0 && (
                         <div>
                           <label className="text-sm text-gray-500">Expertise</label>
                           <div className="flex flex-wrap gap-2 mt-2">
-                            {profile.expertise.map((skill, index) => (
-                              <span key={index} className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm">
-                                {skill}
-                              </span>
-                            ))}
+                            {profile.expertise.map((skill, index) => {
+                              // Ensure we're rendering a string
+                              const skillName = typeof skill === 'string' ? skill : skill?.name || String(skill);
+                              return (
+                                <span key={index} className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm">
+                                  {skillName}
+                                </span>
+                              );
+                            })}
                           </div>
                         </div>
                       )}
                       <div className="flex items-center pt-2">
-                        {profile.verified && (
-                          <>
-                            <CheckCircle className="w-5 h-5 text-green-500 mr-2" />
-                            <span className="text-sm text-green-700">Verified Consultant</span>
-                          </>
-                        )}
-                        {profile.subscription_status === 'active' && (
-                          <span className="ml-4 px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs">
-                            Subscription Active
-                          </span>
-                        )}
+                        {profile.verified && (<><CheckCircle className="w-5 h-5 text-green-500 mr-2" /><span className="text-sm text-green-700">Verified Consultant</span></>)}
+                        {profile.subscriptionStatus === 'active' && (<span className="ml-4 px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs">Subscription Active</span>)}
                       </div>
                     </div>
                   </div>
@@ -2392,137 +2331,31 @@ const ConsultantDashboard = () => {
             {activeTab === 'matches' && (
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                 <h2 className="text-xl font-bold text-gray-900 mb-6">My Matches</h2>
-                
                 {activeMatches.length > 0 ? (
                   <div className="space-y-4">
                     {activeMatches.map((match) => (
                       <div key={match.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition">
                         <div className="flex justify-between items-start mb-3">
-                          <div>
-                            <h3 className="font-semibold text-gray-900">{match.client}</h3>
-                            <p className="text-gray-600">{match.project}</p>
-                          </div>
-                          <span className={`px-3 py-1 text-xs rounded-full ${getStatusColor(match.status)}`}>
-                            {getStatusText(match.status)}
-                          </span>
+                          <div><h3 className="font-semibold text-gray-900">{match.client}</h3><p className="text-gray-600">{match.project}</p></div>
+                          <span className={`px-3 py-1 text-xs rounded-full ${getStatusColor(match.status)}`}>{getStatusText(match.status)}</span>
                         </div>
                         <div className="flex items-center justify-between text-sm">
                           <div className="flex items-center space-x-4 text-gray-500">
-                            <span className="flex items-center">
-                              <Clock className="w-4 h-4 mr-1" />
-                              {match.duration}
-                            </span>
-                            <span className="flex items-center">
-                              <Calendar className="w-4 h-4 mr-1" />
-                              {new Date(match.startDate).toLocaleDateString()}
-                            </span>
+                            <span className="flex items-center"><Clock className="w-4 h-4 mr-1" />{match.duration}</span>
+                            <span className="flex items-center"><Calendar className="w-4 h-4 mr-1" />{new Date(match.startDate).toLocaleDateString()}</span>
                           </div>
-                          <button 
-                            onClick={() => handleViewMatch(match.id)}
-                            className="text-blue-600 hover:text-blue-700 font-medium"
-                          >
-                            View Details →
-                          </button>
+                          <button onClick={() => handleViewMatch(match.id)} className="text-blue-600 hover:text-blue-700 font-medium">View Details →</button>
                         </div>
                       </div>
                     ))}
                   </div>
                 ) : (
                   <div className="text-center py-12">
-                    <div className="bg-gray-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <LinkIcon className="w-10 h-10 text-gray-400" />
-                    </div>
+                    <div className="bg-gray-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4"><LinkIcon className="w-10 h-10 text-gray-400" /></div>
                     <h3 className="text-lg font-medium text-gray-900 mb-2">No matches yet</h3>
                     <p className="text-gray-500">Complete your profile to get matched with relevant projects</p>
                   </div>
                 )}
-              </div>
-            )}
-
-            {/* Support Tab */}
-            {activeTab === 'support' && (
-              <div className="space-y-6">
-                {/* Support Header */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h2 className="text-2xl font-bold text-gray-900">Support Center</h2>
-                      <p className="text-gray-600 mt-1">Get help with your account, projects, or technical issues</p>
-                    </div>
-                    <button
-                      onClick={() => setIsSupportModalOpen(true)}
-                      className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition font-medium flex items-center"
-                    >
-                      <HelpCircle className="w-5 h-5 mr-2" />
-                      Contact Support
-                    </button>
-                  </div>
-                </div>
-
-                {/* Quick Support Options */}
-                <div className="grid md:grid-cols-3 gap-4">
-                  <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center hover:shadow-md transition">
-                    <div className="bg-blue-100 w-12 h-12 rounded-lg flex items-center justify-center mx-auto mb-4">
-                      <Mail className="w-6 h-6 text-blue-600" />
-                    </div>
-                    <h3 className="font-semibold text-gray-900 mb-2">Email Support</h3>
-                    <p className="text-sm text-gray-600 mb-3">support@webconsultanthub.com</p>
-                    <p className="text-xs text-gray-500">Reply within 24 hours</p>
-                  </div>
-
-                  <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center hover:shadow-md transition">
-                    <div className="bg-green-100 w-12 h-12 rounded-lg flex items-center justify-center mx-auto mb-4">
-                      <MessageSquare className="w-6 h-6 text-green-600" />
-                    </div>
-                    <h3 className="font-semibold text-gray-900 mb-2">Live Chat</h3>
-                    <p className="text-sm text-gray-600 mb-3">Chat with support team</p>
-                    <p className="text-xs text-gray-500">Available 24/7</p>
-                  </div>
-
-                  <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center hover:shadow-md transition">
-                    <div className="bg-purple-100 w-12 h-12 rounded-lg flex items-center justify-center mx-auto mb-4">
-                      <FileText className="w-6 h-6 text-purple-600" />
-                    </div>
-                    <h3 className="font-semibold text-gray-900 mb-2">Help Center</h3>
-                    <p className="text-sm text-gray-600 mb-3">Browse knowledge base</p>
-                    <p className="text-xs text-gray-500">Self-service resources</p>
-                  </div>
-                </div>
-
-                {/* Support Tickets */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Your Support Tickets</h3>
-                  
-                  {supportLoading ? (
-                    <div className="flex justify-center py-8">
-                      <Loader className="w-8 h-8 animate-spin text-blue-600" />
-                    </div>
-                  ) : supportTickets.length > 0 ? (
-                    <div className="space-y-4">
-                      {supportTickets.map((ticket) => (
-                        <SupportTicket
-                          key={ticket._id}
-                          ticket={ticket}
-                          onViewDetails={fetchTicketDetails}
-                        />
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-12">
-                      <div className="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <Ticket className="w-8 h-8 text-gray-400" />
-                      </div>
-                      <h3 className="text-lg font-medium text-gray-900 mb-2">No support tickets</h3>
-                      <p className="text-gray-500 mb-4">You haven't created any support tickets yet</p>
-                      <button
-                        onClick={() => setIsSupportModalOpen(true)}
-                        className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition font-medium"
-                      >
-                        Create Support Ticket
-                      </button>
-                    </div>
-                  )}
-                </div>
               </div>
             )}
 
@@ -2531,9 +2364,7 @@ const ConsultantDashboard = () => {
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                 <h2 className="text-xl font-bold text-gray-900 mb-6">My Projects</h2>
                 <div className="text-center py-12">
-                  <div className="bg-gray-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Briefcase className="w-10 h-10 text-gray-400" />
-                  </div>
+                  <div className="bg-gray-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4"><Briefcase className="w-10 h-10 text-gray-400" /></div>
                   <h3 className="text-lg font-medium text-gray-900 mb-2">No projects yet</h3>
                   <p className="text-gray-500">Projects will appear here once you're matched and accepted</p>
                 </div>
@@ -2545,9 +2376,7 @@ const ConsultantDashboard = () => {
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                 <h2 className="text-xl font-bold text-gray-900 mb-6">Messages</h2>
                 <div className="text-center py-12">
-                  <div className="bg-gray-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <MessageSquare className="w-10 h-10 text-gray-400" />
-                  </div>
+                  <div className="bg-gray-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4"><MessageSquare className="w-10 h-10 text-gray-400" /></div>
                   <h3 className="text-lg font-medium text-gray-900 mb-2">No messages yet</h3>
                   <p className="text-gray-500">Messages will appear here when you connect with clients</p>
                 </div>
@@ -2559,11 +2388,58 @@ const ConsultantDashboard = () => {
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                 <h2 className="text-xl font-bold text-gray-900 mb-6">Documents</h2>
                 <div className="text-center py-12">
-                  <div className="bg-gray-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <FileText className="w-10 h-10 text-gray-400" />
-                  </div>
+                  <div className="bg-gray-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4"><FileText className="w-10 h-10 text-gray-400" /></div>
                   <h3 className="text-lg font-medium text-gray-900 mb-2">No documents uploaded</h3>
                   <p className="text-gray-500">Upload contracts, invoices, and other documents here</p>
+                </div>
+              </div>
+            )}
+
+            {/* Support Tab */}
+            {activeTab === 'support' && (
+              <div className="space-y-6">
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                  <div className="flex items-center justify-between">
+                    <div><h2 className="text-2xl font-bold text-gray-900">Support Center</h2><p className="text-gray-600 mt-1">Get help with your account, projects, or technical issues</p></div>
+                    <button onClick={() => setIsSupportModalOpen(true)} className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition font-medium flex items-center"><HelpCircle className="w-5 h-5 mr-2" />Contact Support</button>
+                  </div>
+                </div>
+
+                <div className="grid md:grid-cols-3 gap-4">
+                  <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center hover:shadow-md transition">
+                    <div className="bg-blue-100 w-12 h-12 rounded-lg flex items-center justify-center mx-auto mb-4"><Mail className="w-6 h-6 text-blue-600" /></div>
+                    <h3 className="font-semibold text-gray-900 mb-2">Email Support</h3>
+                    <p className="text-sm text-gray-600 mb-3">support@webconsultanthub.com</p>
+                    <p className="text-xs text-gray-500">Reply within 24 hours</p>
+                  </div>
+                  <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center hover:shadow-md transition">
+                    <div className="bg-green-100 w-12 h-12 rounded-lg flex items-center justify-center mx-auto mb-4"><MessageSquare className="w-6 h-6 text-green-600" /></div>
+                    <h3 className="font-semibold text-gray-900 mb-2">Live Chat</h3>
+                    <p className="text-sm text-gray-600 mb-3">Chat with support team</p>
+                    <p className="text-xs text-gray-500">Available 24/7</p>
+                  </div>
+                  <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center hover:shadow-md transition">
+                    <div className="bg-purple-100 w-12 h-12 rounded-lg flex items-center justify-center mx-auto mb-4"><FileText className="w-6 h-6 text-purple-600" /></div>
+                    <h3 className="font-semibold text-gray-900 mb-2">Help Center</h3>
+                    <p className="text-sm text-gray-600 mb-3">Browse knowledge base</p>
+                    <p className="text-xs text-gray-500">Self-service resources</p>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Your Support Tickets</h3>
+                  {supportLoading ? (
+                    <div className="flex justify-center py-8"><Loader className="w-8 h-8 animate-spin text-blue-600" /></div>
+                  ) : supportTickets.length > 0 ? (
+                    <div className="space-y-4">{supportTickets.map((ticket) => (<SupportTicket key={ticket._id} ticket={ticket} onViewDetails={fetchTicketDetails} />))}</div>
+                  ) : (
+                    <div className="text-center py-12">
+                      <div className="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"><Ticket className="w-8 h-8 text-gray-400" /></div>
+                      <h3 className="text-lg font-medium text-gray-900 mb-2">No support tickets</h3>
+                      <p className="text-gray-500 mb-4">You haven't created any support tickets yet</p>
+                      <button onClick={() => setIsSupportModalOpen(true)} className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition font-medium">Create Support Ticket</button>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -2573,43 +2449,20 @@ const ConsultantDashboard = () => {
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                 <h2 className="text-xl font-bold text-gray-900 mb-6">Settings</h2>
                 <div className="space-y-6">
-                  <div>
-                    <h3 className="text-lg font-medium text-gray-900 mb-4">Notification Preferences</h3>
+                  <div><h3 className="text-lg font-medium text-gray-900 mb-4">Notification Preferences</h3>
                     <div className="space-y-3">
-                      <label className="flex items-center">
-                        <input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
-                        <span className="ml-2 text-gray-700">Email notifications for new matches</span>
-                      </label>
-                      <label className="flex items-center">
-                        <input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
-                        <span className="ml-2 text-gray-700">Email notifications for messages</span>
-                      </label>
-                      <label className="flex items-center">
-                        <input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
-                        <span className="ml-2 text-gray-700">Weekly summary emails</span>
-                      </label>
+                      <label className="flex items-center"><input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" /><span className="ml-2 text-gray-700">Email notifications for new matches</span></label>
+                      <label className="flex items-center"><input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" /><span className="ml-2 text-gray-700">Email notifications for messages</span></label>
+                      <label className="flex items-center"><input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" /><span className="ml-2 text-gray-700">Weekly summary emails</span></label>
                     </div>
                   </div>
-                  
-                  <div>
-                    <h3 className="text-lg font-medium text-gray-900 mb-4">Privacy Settings</h3>
+                  <div><h3 className="text-lg font-medium text-gray-900 mb-4">Privacy Settings</h3>
                     <div className="space-y-3">
-                      <label className="flex items-center">
-                        <input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
-                        <span className="ml-2 text-gray-700">Make my profile visible to clients</span>
-                      </label>
-                      <label className="flex items-center">
-                        <input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
-                        <span className="ml-2 text-gray-700">Show my availability status</span>
-                      </label>
+                      <label className="flex items-center"><input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" /><span className="ml-2 text-gray-700">Make my profile visible to clients</span></label>
+                      <label className="flex items-center"><input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" /><span className="ml-2 text-gray-700">Show my availability status</span></label>
                     </div>
                   </div>
-                  
-                  <div className="pt-4 border-t border-gray-200">
-                    <button className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 text-sm">
-                      Delete Account
-                    </button>
-                  </div>
+                  <div className="pt-4 border-t border-gray-200"><button className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 text-sm">Delete Account</button></div>
                 </div>
               </div>
             )}
