@@ -1543,170 +1543,155 @@ const Home = () => {
             ))}
           </div>
           
-          {/* Comparison */}
-          <div className="grid md:grid-cols-2 gap-8">
-            {/* Consultant Column */}
-            <div className="bg-gradient-to-br from-blue-50 to-white rounded-2xl p-8 border border-blue-100">
-              <div className="flex items-center mb-6">
-                <div className="bg-blue-600 p-3 rounded-xl mr-4">
-                  <Users className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-2xl font-bold text-gray-900">For Consultants</h3>
-                  <p className="text-blue-600 font-medium">€99/year subscription</p>
-                </div>
-              </div>
-              
-              <ul className="space-y-4">
-                {consultantBenefits.map((benefit, index) => (
-                  <li key={index} className="flex items-start">
-                    <CheckCircle className="w-5 h-5 text-green-500 mr-3 flex-shrink-0 mt-0.5" />
-                    <span className="text-gray-700">{benefit}</span>
-                  </li>
-                ))}
-              </ul>
-              
-              <button
-                onClick={handleGetStartedClick}
-                className="mt-8 inline-flex items-center text-blue-600 font-medium hover:text-blue-700"
-              >
-                Sign up as consultant
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </button>
-            </div>
-            
-            {/* Client Column */}
-            <div className="bg-gradient-to-br from-gray-50 to-white rounded-2xl p-8 border border-gray-200">
-              <div className="flex items-center mb-6">
-                <div className="bg-gray-900 p-3 rounded-xl mr-4">
-                  <Briefcase className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-2xl font-bold text-gray-900">For Clients</h3>
-                  <p className="text-gray-600 font-medium">Free to use</p>
-                </div>
-              </div>
-              
-              <ul className="space-y-4">
-                {clientBenefits.map((benefit, index) => (
-                  <li key={index} className="flex items-start">
-                    <CheckCircle className="w-5 h-5 text-green-500 mr-3 flex-shrink-0 mt-0.5" />
-                    <span className="text-gray-700">{benefit}</span>
-                  </li>
-                ))}
-              </ul>
-              
-              <button
-                onClick={handleGetStartedClick}
-                className="mt-8 inline-flex items-center text-gray-900 font-medium hover:text-blue-600"
-              >
-                Sign up as client
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </button>
-            </div>
-          </div>
+         {/* Comparison */}
+<div className="grid md:grid-cols-2 gap-8">
+  {/* Consultant Column */}
+  <div className="bg-gradient-to-br from-blue-50 to-white rounded-2xl p-8 border border-blue-100">
+    <div className="flex items-center mb-6">
+      <div className="bg-blue-600 p-3 rounded-xl mr-4">
+        <Users className="w-6 h-6 text-white" />
+      </div>
+      <div>
+        <h3 className="text-2xl font-bold text-gray-900">For Consultants</h3>
+        <p className="text-blue-600 font-medium">€99/year subscription</p>
+      </div>
+    </div>
+    
+    <ul className="space-y-4">
+      {consultantBenefits.map((benefit, index) => (
+        <li key={index} className="flex items-start">
+          <CheckCircle className="w-5 h-5 text-green-500 mr-3 flex-shrink-0 mt-0.5" />
+          <span className="text-gray-700">{benefit}</span>
+        </li>
+      ))}
+    </ul>
+  </div>
+  
+  {/* Client Column */}
+  <div className="bg-gradient-to-br from-gray-50 to-white rounded-2xl p-8 border border-gray-200">
+    <div className="flex items-center mb-6">
+      <div className="bg-gray-900 p-3 rounded-xl mr-4">
+        <Briefcase className="w-6 h-6 text-white" />
+      </div>
+      <div>
+        <h3 className="text-2xl font-bold text-gray-900">For Clients</h3>
+        <p className="text-gray-600 font-medium">Free to use</p>
+      </div>
+    </div>
+    
+    <ul className="space-y-4">
+      {clientBenefits.map((benefit, index) => (
+        <li key={index} className="flex items-start">
+          <CheckCircle className="w-5 h-5 text-green-500 mr-3 flex-shrink-0 mt-0.5" />
+          <span className="text-gray-700">{benefit}</span>
+        </li>
+      ))}
+    </ul>
+  </div>
+</div>
+
+
         </div>
       </section>
 
-      {/* Pricing */}
-      <section id="pricing" className="py-16 bg-gray-50">
-        <div className="max-w-9xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Simple, Transparent Pricing</h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">
-              No hidden fees, no complicated plans
-            </p>
+    {/* Pricing */}
+<section id="pricing" className="py-16 bg-gray-50">
+  <div className="max-w-9xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="text-center mb-12">
+      <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Simple, Transparent Pricing</h2>
+      <p className="text-gray-600 max-w-2xl mx-auto">
+        No hidden fees, no complicated plans
+      </p>
+    </div>
+    
+    <div className="max-w-4xl mx-auto">
+      <div className="grid md:grid-cols-2 gap-8">
+        {/* Consultant Plan */}
+        <div className="bg-white rounded-2xl p-8 border-2 border-blue-200 shadow-lg hover:shadow-xl transition-shadow">
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center px-4 py-2 rounded-full bg-blue-100 text-blue-700 mb-4">
+              <span className="font-medium">Consultant Plan</span>
+            </div>
+            <div className="flex items-end justify-center mb-4">
+              <span className="text-5xl font-bold text-gray-900">€99</span>
+              <span className="text-gray-600 ml-2 mb-2">/ year</span>
+            </div>
+            <p className="text-gray-600">One-time annual subscription</p>
           </div>
           
-          <div className="max-w-4xl mx-auto">
-            <div className="grid md:grid-cols-2 gap-8">
-              <div className="bg-white rounded-2xl p-8 border-2 border-blue-200 shadow-lg">
-                <div className="text-center mb-8">
-                  <div className="inline-flex items-center px-4 py-2 rounded-full bg-blue-100 text-blue-700 mb-4">
-                    <span className="font-medium">Consultant Plan</span>
-                  </div>
-                  <div className="flex items-end justify-center mb-4">
-                    <span className="text-5xl font-bold text-gray-900">€99</span>
-                    <span className="text-gray-600 ml-2 mb-2">/ year</span>
-                  </div>
-                  <p className="text-gray-600">One-time annual subscription</p>
-                </div>
-                
-                <div className="space-y-4 mb-8">
-                  <div className="flex items-center">
-                    <Calendar className="w-5 h-5 text-blue-600 mr-3" />
-                    <span className="text-gray-700">Set availability & location</span>
-                  </div>
-                  <div className="flex items-center">
-                    <FileText className="w-5 h-5 text-blue-600 mr-3" />
-                    <span className="text-gray-700">Upload CV & certificates</span>
-                  </div>
-                  <div className="flex items-center">
-                    <MapPin className="w-5 h-5 text-blue-600 mr-3" />
-                    <span className="text-gray-700">Location & work mode preferences</span>
-                  </div>
-                  <div className="flex items-center">
-                    <Target className="w-5 h-5 text-blue-600 mr-3" />
-                    <span className="text-gray-700">Admin-validated matches</span>
-                  </div>
-                </div>
-                
-                <button
-                  onClick={handleGetStartedClick}
-                  className="block w-full bg-blue-600 text-white text-center py-4 rounded-xl hover:bg-blue-700 transition font-medium"
-                >
-                  Sign Up as Consultant
-                </button>
-              </div>
-              
-              <div className="bg-white rounded-2xl p-8 border-2 border-gray-200">
-                <div className="text-center mb-8">
-                  <div className="inline-flex items-center px-4 py-2 rounded-full bg-gray-100 text-gray-700 mb-4">
-                    <span className="font-medium">Client Plan</span>
-                  </div>
-                  <div className="flex items-end justify-center mb-4">
-                    <span className="text-5xl font-bold text-gray-900">€0</span>
-                    <span className="text-gray-600 ml-2 mb-2">/ forever</span>
-                  </div>
-                  <p className="text-gray-600">Completely free for clients</p>
-                </div>
-                
-                <div className="space-y-4 mb-8">
-                  <div className="flex items-center">
-                    <Building className="w-5 h-5 text-gray-700 mr-3" />
-                    <span className="text-gray-700">Company profile creation</span>
-                  </div>
-                  <div className="flex items-center">
-                    <Target className="w-5 h-5 text-gray-700 mr-3" />
-                    <span className="text-gray-700">Submit detailed project requests</span>
-                  </div>
-                  <div className="flex items-center">
-                    <UserCheck className="w-5 h-5 text-gray-700 mr-3" />
-                    <span className="text-gray-700">Access pre-vetted consultants</span>
-                  </div>
-                  <div className="flex items-center">
-                    <Shield className="w-5 h-5 text-gray-700 mr-3" />
-                    <span className="text-gray-700">Admin-managed matching process</span>
-                  </div>
-                </div>
-                
-                <button
-                  onClick={handleGetStartedClick}
-                  className="block w-full bg-gray-900 text-white text-center py-4 rounded-xl hover:bg-black transition font-medium"
-                >
-                  Sign Up as Client
-                </button>
-              </div>
+          <div className="space-y-4 mb-8">
+            <div className="flex items-center">
+              <Calendar className="w-5 h-5 text-blue-600 mr-3" />
+              <span className="text-gray-700">Set availability & location</span>
             </div>
-            
-            <div className="text-center mt-8">
-              <p className="text-gray-600 text-sm">
-                Both plans include email-based access, admin matching validation, and dedicated support
-              </p>
+            <div className="flex items-center">
+              <FileText className="w-5 h-5 text-blue-600 mr-3" />
+              <span className="text-gray-700">Upload CV & certificates</span>
+            </div>
+            <div className="flex items-center">
+              <MapPin className="w-5 h-5 text-blue-600 mr-3" />
+              <span className="text-gray-700">Location & work mode preferences</span>
+            </div>
+            <div className="flex items-center">
+              <Target className="w-5 h-5 text-blue-600 mr-3" />
+              <span className="text-gray-700">Admin-validated matches</span>
             </div>
           </div>
         </div>
-      </section>
+        
+        {/* Client Plan */}
+        <div className="bg-white rounded-2xl p-8 border-2 border-gray-200 shadow-lg hover:shadow-xl transition-shadow">
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center px-4 py-2 rounded-full bg-gray-100 text-gray-700 mb-4">
+              <span className="font-medium">Client Plan</span>
+            </div>
+            <div className="flex items-end justify-center mb-4">
+              <span className="text-5xl font-bold text-gray-900">€0</span>
+              <span className="text-gray-600 ml-2 mb-2">/ forever</span>
+            </div>
+            <p className="text-gray-600">Completely free for clients</p>
+          </div>
+          
+          <div className="space-y-4 mb-8">
+            <div className="flex items-center">
+              <Building className="w-5 h-5 text-gray-700 mr-3" />
+              <span className="text-gray-700">Company profile creation</span>
+            </div>
+            <div className="flex items-center">
+              <Target className="w-5 h-5 text-gray-700 mr-3" />
+              <span className="text-gray-700">Submit detailed project requests</span>
+            </div>
+            <div className="flex items-center">
+              <UserCheck className="w-5 h-5 text-gray-700 mr-3" />
+              <span className="text-gray-700">Access pre-vetted consultants</span>
+            </div>
+            <div className="flex items-center">
+              <Shield className="w-5 h-5 text-gray-700 mr-3" />
+              <span className="text-gray-700">Admin-managed matching process</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      {/* Single CTA Button */}
+      <div className="text-center mt-8">
+        <button
+          onClick={handleGetStartedClick}
+          className="bg-blue-600 text-white px-8 py-4 rounded-xl hover:bg-blue-700 transition-all duration-300 font-medium text-lg inline-flex items-center justify-center shadow-lg hover:shadow-xl"
+        >
+          Get Started
+          <ArrowRight className="w-5 h-5 ml-2" />
+        </button>
+      </div>
+      
+      <div className="text-center mt-6">
+        <p className="text-gray-600 text-sm">
+          Both plans include email-based access, admin matching validation, and dedicated support
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
 
       {/* FAQ Section - Two Column Layout */}
       <section id="faq" className="py-16 bg-white">
